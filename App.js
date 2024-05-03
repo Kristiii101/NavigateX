@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import MapComponent from './Components/MapComponent';
-import LocationButton from './Components/LocationButton'; 
-//import SearchComponent from './Components/SearchComponent';
+import LocationButton from './Components/LocationButton';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import regions from './utils/regions';
 import googleapikey from './utils/google_api_key';
-import AutoComplete from './Components/AutoComplete';
+import { SearchAutoCompleteComponent } from './Components/SearchAutoCompleteComponent';
 
 export default function App() {
 
@@ -56,18 +55,6 @@ export default function App() {
     } catch (error) {
       console.error('Failed to fetch locations', error);
     }
-  
-    return (
-      <View style={styles.container}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search for a location"
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          onSubmitEditing={handleSearch}
-        />
-      </View>
-    );
   };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,9 +62,8 @@ export default function App() {
   return (
     <View style={styles.container}>
       <MapComponent region={mapRegion} onRegionChange={setMapRegion} />
-      {/* <SearchComponent onSearch={handleLocationSearch} /> */}
-      <AutoComplete onLocationSelect={handleLocationSearch} />
       <LocationButton onPress={fetchUserLocation} />
+      <SearchAutoCompleteComponent handleLocationSearch ={handleLocationSearch} />
       {errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
     </View>
   );
@@ -93,6 +79,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-
-///my code working!
