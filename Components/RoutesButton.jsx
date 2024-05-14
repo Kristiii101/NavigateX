@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 
-const LocationButton = ({ onPress }) => {
+const RoutesButton = ({ onPress }) => {
   return (
     <View style={styles.buttonContainer}>
       <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>📍</Text>
+        <Text style={styles.buttonText}>Routes</Text>
       </TouchableOpacity>
     </View>
   );
@@ -14,7 +14,7 @@ const LocationButton = ({ onPress }) => {
 const styles = StyleSheet.create({
   buttonContainer: {
     position: 'absolute',
-    right: 10,
+    right: 57,
     bottom: 10,
   },
   button: {
@@ -32,4 +32,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LocationButton;
+export default RoutesButton;

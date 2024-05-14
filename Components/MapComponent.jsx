@@ -1,23 +1,35 @@
 import React from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
-import MapView from 'react-native-maps';
+import { StyleSheet } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
-const MapComponent = ({ region, onRegionChange }) => {
+const MapComponent = ({ region, onRegionChange, marker, route }) => {
   return (
     <MapView
       style={styles.map}
       region={region}
       showsUserLocation
-      showsMyLocationButton={false}
       onRegionChangeComplete={onRegionChange}
-    />
+    >
+      {marker && (
+        <Marker
+          coordinate={marker}
+          //title="Searched Location"
+        />
+      )}
+      {route && (
+        <Polyline
+          coordinates={route}
+          strokeColor="blue" // Color of the route line
+          strokeWidth={3} // Width of the route line
+        />
+      )}
+    </MapView>
   );
 };
 
 const styles = StyleSheet.create({
   map: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
+    ...StyleSheet.absoluteFillObject,
   },
 });
 
