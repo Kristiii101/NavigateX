@@ -2,13 +2,27 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
-const MapComponent = ({ region, onRegionChange, marker, route }) => {
+const MapComponent = ({ region, onRegionChange, marker, route, onPoiClick, onMapPress }) => {
   return (
     <MapView
       style={styles.map}
       region={region}
       showsUserLocation
+      showsMyLocationButton = {false}
+      showsCompassButton = {false}
       onRegionChangeComplete={onRegionChange}
+      ////////////////////////////////////////////////  POI //////////////////
+      onPoiClick={(e) => {
+        const poi = e.nativeEvent.coordinate;
+        const name = e.nativeEvent.name;
+        onPoiClick(poi, name);
+      }}
+      onPress={(e) => {
+        // Ignore marker clicks
+        if (e.nativeEvent.action !== 'marker-press') {
+          onMapPress();
+        }
+      }}
     >
       {marker && (
         <Marker

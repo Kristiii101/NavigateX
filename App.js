@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Button } from 'react-native';
 import MapComponent  from './Components/MapComponent';
 import LocationButton from './Components/LocationButton';
@@ -14,16 +14,29 @@ export default function App() {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////// used constants //////////////////////////////////
+
   const [mapRegion, setMapRegion] = useState(regions);
   const [errorMsg, setErrorMsg] = useState(null);
+  const clearErrorMessage = () => {
+    setTimeout(() => {
+      setErrorMsg(null);
+    }, 5000); // Clear the error message after 10 seconds
+  };
   const [marker, setMarker] = useState(null);
   const [route, setRoute] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [selectedPoiName, setSelectedPoiName] = useState('');
+  const autocompleteRef = useRef();
+
+ /////////////////////////////////////////////////////////////////////////////
+
 
   const fetchUserLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       setErrorMsg('Permission denied');
+      clearErrorMessage();
       return;
     }
     let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true });
@@ -62,12 +75,17 @@ export default function App() {
           ...searchLocation,
         });
         setMarker(searchLocation);
+        setSelectedPoiName('');//////////////// name of the POI
         setRoute(null);
       } else {
         console.log('No results found');
+        setErrorMsg('No results found');
+        clearErrorMessage();
       }
     } catch (error) {
       console.error('Failed to fetch locations', error);
+      setErrorMsg('Failed to fetch locations');
+      clearErrorMessage()
     }
   };
 
@@ -76,7 +94,8 @@ export default function App() {
 
 const fetchRoute = async () => {
   if (!currentLocation || !marker) {
-    setErrorMsg('Current location or destination not set');
+    setErrorMsg('Destination not set');
+    clearErrorMessage();
     return;
   }
   const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
@@ -95,23 +114,55 @@ const fetchRoute = async () => {
       setRoute(routeCoordinates);
     } else {
       console.log('No route found');
+      setErrorMsg('No route found');
+      clearErrorMessage();
     }
   } catch (error) {
     console.error('Failed to fetch route', error);
+    setErrorMsg('Failed to fetch route');
+    clearErrorMessage();
   }
 };
 
 const clearSearch = () => {
-  setMarker(null);
-  setRoute(null); // Clear the route as well if needed
+  setMarker(null); // clear marker
+  setRoute(null); // Clear the route 
+  setSelectedPoiName(''); // clear the POI
+  autocompleteRef.current.setAddressText('');
+  //autocompleteRef.current.setAddressText('');
+  autocompleteRef.current?.blur();
 };
+
+const clearPOI = () => {
+  //setMarker(null); // clear marker
+  setSelectedPoiName(''); // clear the POI
+  autocompleteRef.current?.clear();
+  autocompleteRef.current?.blur();
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
   return (
     <View style={styles.container}>
-      <MapComponent region={mapRegion} onRegionChange={setMapRegion} marker={marker} route={route} />
+      <MapComponent 
+        region={mapRegion} 
+        onRegionChange={setMapRegion} 
+        marker={marker} 
+        route={route} 
+        onPoiClick={(poi, name) => {
+          setMarker(poi);
+          setRoute(null);
+          setSelectedPoiName(name);
+          autocompleteRef.current?.setAddressText(name); // Set the POI name in the autocomplete input
+        }} onMapPress={clearPOI} 
+      />
       <LocationButton onPress={fetchUserLocation} />
-      <SearchAutoCompleteComponent handleLocationSearch ={handleLocationSearch} clearSearch={clearSearch} />
+      <SearchAutoCompleteComponent 
+        handleLocationSearch={handleLocationSearch} 
+        clearSearch={clearSearch} 
+        selectedPoiName={selectedPoiName} // Pass the selected POI name
+        ref={autocompleteRef}
+      />
 
       <RoutesButton onPress={fetchRoute} /> 
       {errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
@@ -126,6 +177,9 @@ const styles = StyleSheet.create({
   error: {
     color: 'red',
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 200,
+    backgroundColor: 'white',
+    fontSize: 25,
+    
   },
 });

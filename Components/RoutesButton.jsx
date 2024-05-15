@@ -5,7 +5,7 @@ const RoutesButton = ({ onPress }) => {
   return (
     <View style={styles.buttonContainer}>
       <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>Routes</Text>
+        <Text style={styles.buttonText}>Route</Text>
       </TouchableOpacity>
     </View>
   );
