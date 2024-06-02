@@ -17,13 +17,20 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "NSLocationWhenInUseUsageDescription": "We need your location to show you relevant content.",
+      "NSLocationAlwaysUsageDescription": "We need your location to show you relevant content."
+      
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

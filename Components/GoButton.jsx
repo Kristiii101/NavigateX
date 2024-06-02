@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     position: 'absolute',
     right: 10,
-    bottom: 10,
+    bottom: 30,
   },
   button: {
     backgroundColor: 'white',
