@@ -3,9 +3,6 @@ import { PermissionsAndroid, Platform } from "react-native";
 import Geolocation from 'react-native-geolocation-service';
 import * as Location from 'expo-location';
 
-
-////////////////////////////////    
-
 export const getCurrentLocation = async () => {
     try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -26,29 +23,6 @@ export const getCurrentLocation = async () => {
         console.error(error);
     }
 };
-
-////////////////////////////////////////////////////////////////
-// export const getCurrentLocation = () =>
-//     new Promise((resolve, reject) => {
-//         Geolocation.getCurrentPosition(
-//             position => {
-//                 const cords = {
-//                     latitude: position.coords.latitude,
-//                     longitude: position.coords.longitude,
-//                     heading: position?.coords?.heading,
-//                 };
-//                 console
-//                 resolve(cords);
-//                 console.log(cords);
-//             },
-//             error => {
-//                 reject(error.message);
-//             },
-//             { enableHighAccuracy: true },
-//         )
-//     })
-
-    ////////////////////////////////////////////////////////////////
 
 export const locationPermission = () => new Promise(async (resolve, reject) => {
     if (Platform.OS === 'ios') {

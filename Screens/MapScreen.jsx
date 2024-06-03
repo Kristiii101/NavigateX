@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform,Button } from 'react-native';
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import googleapikey from '../utils/google_api_key';
 import MapViewDirections from 'react-native-maps-directions';
 import Loader from '../Components/Loader';
-import { locationPermission, getCurrentLocation } from '../Components/getCurrentLocation ';
+import { locationPermission, getCurrentLocation } from '../Components/getCurrentLocation';
 import regions from '../utils/regions';
 import imagePath from '../utils/imagePath';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
@@ -14,7 +14,7 @@ const ASPECT_RATIO = screen.width / screen.height;
 const LATITUDE_DELTA = 0.0018;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
-const MapScreen = ({ navigation }) => {
+const MapScreen = ({ }) => {
     const mapRef = useRef()
     const markerRef = useRef()
     const googlePlacesRef = useRef();
@@ -32,11 +32,11 @@ const MapScreen = ({ navigation }) => {
         }),
         time: 0,
         distance: 0,
-        heading: 0
-
+        heading: 0,
+        routeStarted: 0 ////////// adaugat route daca e on sau off
     })
 
-    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading } = state
+    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted } = state
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
     useEffect(() => {
@@ -60,18 +60,28 @@ const MapScreen = ({ navigation }) => {
                 })
             })
         }
+
+        // Verificare dacă locația curentă este aproape de destinație
+        if (Object.keys(destinationCords).length > 0) {
+            const distanceToDestination = getDistanceFromLatLonInMeters(
+                curLoc.latitude,
+                curLoc.longitude,
+                destinationCords.latitude,
+                destinationCords.longitude
+            );
+            if (distanceToDestination < 20) {
+                Alert.alert('You have arrived at your destination!');
+                updateState({ routeStarted: 0 });
+            }
+        }
     }
 
     useEffect(() => {
         const interval = setInterval(() => {
             getLiveLocation()
-        }, 6000);
+        }, 100);                                   // change interval to 100 for faster location update
         return () => clearInterval(interval)
     }, [])
-
-    // const onPressLocation = () => {
-    //     navigation.navigate('chooseLocation', { getCordinates: fetchValue })
-    // }
 
     const fetchValue = (data) => {
         console.log("this is data", data)
@@ -103,6 +113,15 @@ const MapScreen = ({ navigation }) => {
         })
     }
 
+    const onDestination = () => {
+        mapRef.current.animateToRegion({
+            latitude: destinationCords.latitude,
+            longitude: destinationCords.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA
+        })
+    }
+
     const fetchTime = (d, t) => {
         updateState({
             distance: d,
@@ -115,9 +134,41 @@ const MapScreen = ({ navigation }) => {
         updateState({
             destinationCords: {},
             time: 0,
-            distance: 0
+            distance: 0,
+            routeStarted: 0
         });
     }
+
+    const startRoute = () => {
+        updateState({
+            routeStarted: 1
+        });
+        mapRef.current.animateToRegion({
+            latitude: curLoc.latitude,
+            longitude: curLoc.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA
+        })
+        console.log('Route started');
+      };
+
+      // Funcție pentru calcularea distanței dintre două coordonate în metri
+        const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
+            var R = 6371; // Radius of the earth in km
+            var dLat = deg2rad(lat2 - lat1); // deg2rad below
+            var dLon = deg2rad(lon2 - lon1);
+            var a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            var d = R * c; // Distance in km
+            return d * 1000; // Distance in meters
+        };
+
+        const deg2rad = (deg) => {
+            return deg * (Math.PI / 180);
+        };
 
     return (
         <View style={styles.container}>
@@ -171,11 +222,22 @@ const MapScreen = ({ navigation }) => {
                     <Text style={styles.clearButtonText}>X</Text>
                 </TouchableOpacity>
             )}
+            {Object.keys(destinationCords).length > 0 && (
+                <TouchableOpacity
+                    style={styles.startRouteButton}
+                    onPress={startRoute}
+                >
+                    <Text style={styles.startRouteButtonText}>Start route?</Text>    
+                </TouchableOpacity>
+            )}
 
-            {distance !== 0 && time !== 0 && (<View style={{position: 'absolute' ,alignItems: 'center', top: 50, left: 140 ,marginVertical: 25, zIndex: 1, backgroundColor: 'blue' }}>
-                <Text>Time left: {time.toFixed(0)} minutes</Text>
-                <Text>Distance left: {distance.toFixed(0)} Km</Text>
+            
+
+            {routeStarted !== 0 && distance !== 0 && time !== 0 && (<View style={{position: 'absolute' ,alignItems: 'center', top: 52, left: 10 ,marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100,}}>
+                <Text style={{color: '#ff00ff'}}>Time left: {time.toFixed(0)} minutes</Text>
+                <Text style={{color: '#ff00ff'}}>Distance left: {distance.toFixed(0)} Km</Text>
             </View>)}
+            
             <View style={{ flex: 1 }}>
                 <MapView
                 //showsUserLocation
@@ -225,7 +287,7 @@ const MapScreen = ({ navigation }) => {
                                 mapRef.current.fitToCoordinates(result.coordinates, {
                                     edgePadding: {
                                          right: 30,
-                                         bottom: 300,
+                                         bottom: 100,
                                          left: 30,
                                          top: 100,
                                     },
@@ -245,7 +307,21 @@ const MapScreen = ({ navigation }) => {
                     onPress={onCenter}
                 >
                     <Image source={imagePath.imIndicator} />
-                </TouchableOpacity>
+                </TouchableOpacity> 
+                
+
+            {Object.keys(destinationCords).length > 0 && (
+                <TouchableOpacity
+                    style={{
+                        position: 'absolute',
+                        bottom: 10,
+                        left: 8
+                    }}
+                    onPress={onDestination}
+                >
+                    <Image source={imagePath.imMarker} />
+                </TouchableOpacity> 
+            )}
             </View>
             <Loader isLoading={isLoading} />
         </View>
@@ -280,8 +356,24 @@ const styles = StyleSheet.create({
         height: 48,
         justifyContent: 'center',
         marginTop: 16
-    }
+    },
+    startRouteButton: {
+        position: 'absolute',
+        bottom: 80, // Adjust as needed
+        left: '50%',
+        transform: [{ translateX: -50 }],
+        zIndex: 2,
+        backgroundColor: 'green',
+        borderRadius: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    startRouteButtonText: {
+        color: 'white',
+        fontWeight: 'bold'
+    },
 });
-
 
 export default MapScreen;
