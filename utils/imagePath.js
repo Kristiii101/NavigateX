@@ -3,4 +3,7 @@ export default {
     imMarker: require("../Images/greenMarker.png"),
     imIndicator: require("../Images/greenIndicator.png"),
     imCar: require("../Images/car.png"),
+    imWork: require("../Images/workLogo.png"),
+    imHome: require("../Images/homeLogo.png"),
+    imUser: require("../Images/userLogo.png"),
 }

@@ -33,7 +33,7 @@ const MapScreen = ({ }) => {
         time: 0,
         distance: 0,
         heading: 0,
-        routeStarted: 0 ////////// adaugat route daca e on sau off
+        routeStarted: 0
     })
 
     const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted } = state
@@ -47,7 +47,7 @@ const MapScreen = ({ }) => {
         const locPermissionDenied = await locationPermission()
         if (locPermissionDenied) {
             const { latitude, longitude, heading } = await getCurrentLocation()
-            //console.log("get live location after 4 second",heading)
+            console.log("get live location after 6 second",heading)
             animate(latitude, longitude);
             updateState({
                 heading: heading,
@@ -69,7 +69,7 @@ const MapScreen = ({ }) => {
                 destinationCords.latitude,
                 destinationCords.longitude
             );
-            if (distanceToDestination < 20) {
+            if (distanceToDestination < 50) {
                 Alert.alert('You have arrived at your destination!');
                 updateState({ routeStarted: 0 });
             }
@@ -79,19 +79,9 @@ const MapScreen = ({ }) => {
     useEffect(() => {
         const interval = setInterval(() => {
             getLiveLocation()
-        }, 100);                                   // change interval to 100 for faster location update
+        }, 6000);                                   // change interval to 100 for faster location update
         return () => clearInterval(interval)
     }, [])
-
-    const fetchValue = (data) => {
-        console.log("this is data", data)
-        updateState({
-            destinationCords: {
-                latitude: data.destinationCords.latitude,
-                longitude: data.destinationCords.longitude,
-            }
-        })
-    }
 
     const animate = (latitude, longitude) => {
         const newCoordinate = { latitude, longitude };
@@ -137,6 +127,12 @@ const MapScreen = ({ }) => {
             distance: 0,
             routeStarted: 0
         });
+        mapRef.current.animateToRegion({
+            latitude: curLoc.latitude,
+            longitude: curLoc.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA
+        })
     }
 
     const startRoute = () => {
@@ -152,7 +148,7 @@ const MapScreen = ({ }) => {
         console.log('Route started');
       };
 
-      // Funcție pentru calcularea distanței dintre două coordonate în metri
+      //Funcție pentru calcularea distanței dintre două coordonate în metri
         const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
             var R = 6371; // Radius of the earth in km
             var dLat = deg2rad(lat2 - lat1); // deg2rad below
@@ -206,9 +202,9 @@ const MapScreen = ({ }) => {
                     container: {
                         flex: 0,
                         position: 'absolute',
-                        top: 30,
+                        top: 75,
                         width: '100%',
-                        zIndex: 2
+                        zIndex: 2,
                     },
                     listView: { backgroundColor: 'white' }
                 }}
@@ -231,11 +227,35 @@ const MapScreen = ({ }) => {
                 </TouchableOpacity>
             )}
 
+                <TouchableOpacity
+                    style={styles.workButton}
+                    //onPress={startRoute}
+                >
+                    <Text style={styles.workButtonText}>Work</Text>  
+                    <Image source={imagePath.imWork} style={{width:20, height:25,}} />    
+                </TouchableOpacity>
+            
+                <TouchableOpacity
+                    style={styles.homeButton}
+                    //onPress={startRoute}
+                >
+                    <Text style={styles.homeButtonText}>Home</Text>
+                    <Image source={imagePath.imHome} style={{width:20, height:25,}} />  
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.userButton}
+                    //onPress={startRoute}
+                >
+                    <Text style={styles.userButtonText}>User</Text>
+                    <Image source={imagePath.imUser} style={{width:20, height:25,}} />     
+                </TouchableOpacity>
+
             
 
-            {routeStarted !== 0 && distance !== 0 && time !== 0 && (<View style={{position: 'absolute' ,alignItems: 'center', top: 52, left: 10 ,marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100,}}>
-                <Text style={{color: '#ff00ff'}}>Time left: {time.toFixed(0)} minutes</Text>
-                <Text style={{color: '#ff00ff'}}>Distance left: {distance.toFixed(0)} Km</Text>
+            {routeStarted !== 0 && distance !== 0 && time !== 0 && (<View style={{position: 'absolute' ,alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100,}}>
+                <Text style={{color: '#ff0000', fontSize: 15,}}>Time left: {time.toFixed(0)} minutes</Text>
+                <Text style={{color: '#aa00ff', fontSize: 15,}}>Distance left: {distance.toFixed(0)} Km</Text>
             </View>)}
             
             <View style={{ flex: 1 }}>
@@ -334,7 +354,7 @@ const styles = StyleSheet.create({
     },
     clearButton: {
         position: 'absolute',
-        top: 38, // Adjust as needed
+        top: 80, // Adjust as needed
         right: 8, // Adjust as needed
         zIndex: 2,
         backgroundColor: 'red',
@@ -347,15 +367,6 @@ const styles = StyleSheet.create({
     clearButtonText: {
         color: 'white',
         fontWeight: 'bold'
-    },
-    inpuStyle: {
-        backgroundColor: 'white',
-        borderRadius: 4,
-        borderWidth: 1,
-        alignItems: 'center',
-        height: 48,
-        justifyContent: 'center',
-        marginTop: 16
     },
     startRouteButton: {
         position: 'absolute',
@@ -373,6 +384,66 @@ const styles = StyleSheet.create({
     startRouteButtonText: {
         color: 'white',
         fontWeight: 'bold'
+    },
+    workButton: {
+        position: 'absolute',
+        top: 30, // Adjust as needed
+        left: 12,
+        right: 300,
+        //transform: [{ translateX: -50 }],
+        zIndex: 2,
+        backgroundColor: 'brown',
+        borderRadius: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    workButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    homeButton: {
+        position: 'absolute',
+        top: 30, // Adjust as needed
+        left: 300,
+        right: 12,
+        //transform: [{ translateX: -50 }],
+        zIndex: 2,
+        backgroundColor: 'brown',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    homeButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    userButton: {
+        position: 'absolute',
+        top: 30, // Adjust as needed
+        left: 120,
+        right: 120,
+        //transform: [{ translateX: -50 }],
+        zIndex: 2,
+        backgroundColor: 'blue',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 45,
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    userButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });
 
