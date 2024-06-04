@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform, Alert} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform, Alert } from 'react-native';
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import googleapikey from '../utils/google_api_key';
 import MapViewDirections from 'react-native-maps-directions';
@@ -8,18 +8,20 @@ import { locationPermission, getCurrentLocation } from '../Components/getCurrent
 import regions from '../utils/regions';
 import imagePath from '../utils/imagePath';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const screen = Dimensions.get('window');
 const ASPECT_RATIO = screen.width / screen.height;
 const LATITUDE_DELTA = 0.0018;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
-const MapScreen = ({ }) => {
-    const mapRef = useRef()
-    const markerRef = useRef()
+const MapScreen = () => {
+    const mapRef = useRef();
+    const markerRef = useRef();
     const googlePlacesRef = useRef();
-    const navigation = useNavigation()
+    const navigation = useNavigation();
+    const route = useRoute();
+    const { workCords = {}, homeCords = {} } = route.params || {};
 
     const [state, setState] = useState({
         curLoc: {
@@ -35,21 +37,21 @@ const MapScreen = ({ }) => {
         time: 0,
         distance: 0,
         heading: 0,
-        routeStarted: 0
-    })
+        routeStarted: 0,
+    });
 
-    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted } = state
+    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
     useEffect(() => {
-        getLiveLocation()
-    }, [])
+        getLiveLocation();
+    }, []);
 
     const getLiveLocation = async () => {
-        const locPermissionDenied = await locationPermission()
+        const locPermissionDenied = await locationPermission();
         if (locPermissionDenied) {
-            const { latitude, longitude, heading } = await getCurrentLocation()
-            console.log("get live location after 6 second",heading)
+            const { latitude, longitude, heading } = await getCurrentLocation();
+            console.log("get live location after 6 second", heading);
             animate(latitude, longitude);
             updateState({
                 heading: heading,
@@ -60,7 +62,7 @@ const MapScreen = ({ }) => {
                     latitudeDelta: LATITUDE_DELTA,
                     longitudeDelta: LONGITUDE_DELTA
                 })
-            })
+            });
         }
 
         // Verificare dacă locația curentă este aproape de destinație
@@ -76,25 +78,25 @@ const MapScreen = ({ }) => {
                 updateState({ routeStarted: 0 });
             }
         }
-    }
+    };
 
     useEffect(() => {
         const interval = setInterval(() => {
-            getLiveLocation()
-        }, 6000);                                   // change interval to 100 for faster location update
-        return () => clearInterval(interval)
-    }, [])
+            getLiveLocation();
+        }, 6000); // change interval to 100 for faster location update
+        return () => clearInterval(interval);
+    }, []);
 
     const animate = (latitude, longitude) => {
         const newCoordinate = { latitude, longitude };
-        if (Platform.OS == 'android') {
+        if (Platform.OS === 'android') {
             if (markerRef.current) {
                 markerRef.current.animateMarkerToCoordinate(newCoordinate, 7000);
             }
         } else {
             coordinate.timing(newCoordinate).start();
         }
-    }
+    };
 
     const onCenter = () => {
         mapRef.current.animateToRegion({
@@ -102,8 +104,8 @@ const MapScreen = ({ }) => {
             longitude: curLoc.longitude,
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA
-        })
-    }
+        });
+    };
 
     const onDestination = () => {
         mapRef.current.animateToRegion({
@@ -111,15 +113,15 @@ const MapScreen = ({ }) => {
             longitude: destinationCords.longitude,
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA
-        })
-    }
+        });
+    };
 
     const fetchTime = (d, t) => {
         updateState({
             distance: d,
             time: t
-        })
-    }
+        });
+    };
 
     const clearDestination = () => {
         googlePlacesRef.current.setAddressText('');
@@ -134,8 +136,8 @@ const MapScreen = ({ }) => {
             longitude: curLoc.longitude,
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA
-        })
-    }
+        });
+    };
 
     const startRoute = () => {
         updateState({
@@ -146,34 +148,60 @@ const MapScreen = ({ }) => {
             longitude: curLoc.longitude,
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA
-        })
+        });
         console.log('Route started');
-      };
+    };
 
-      //Funcție pentru calcularea distanței dintre două coordonate în metri
-        const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
-            var R = 6371; // Radius of the earth in km
-            var dLat = deg2rad(lat2 - lat1); // deg2rad below
-            var dLon = deg2rad(lon2 - lon1);
-            var a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            var d = R * c; // Distance in km
-            return d * 1000; // Distance in meters
-        };
+    const setDestinationToWork = () => {
+        if (workCords && workCords.latitude && workCords.longitude) {
+            updateState({
+                destinationCords: {
+                    latitude: workCords.latitude,
+                    longitude: workCords.longitude,
+                }
+            });
+            googlePlacesRef.current.setAddressText('Work');
+            console.log(`Navigating to work: Latitude: ${workCords.latitude}, Longitude: ${workCords.longitude}`);
+        } else {
+            Alert.alert('Work coordinates not set');
+        }
+    };
 
-        const deg2rad = (deg) => {
-            return deg * (Math.PI / 180);
-        };
+    const setDestinationToHome = () => {
+        if (homeCords && homeCords.latitude && homeCords.longitude) {
+            updateState({
+                destinationCords: {
+                    latitude: homeCords.latitude,
+                    longitude: homeCords.longitude,
+                }
+            });
+            googlePlacesRef.current.setAddressText('Home');
+            console.log(`Navigating to home: Latitude: ${homeCords.latitude}, Longitude: ${homeCords.longitude}`);
+        } else {
+            Alert.alert('Home coordinates not set');
+        }
+    };
 
-        const goToUserScreen = () => {
+    const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
+        var R = 6371; // Radius of the earth in km
+        var dLat = deg2rad(lat2 - lat1); // deg2rad below
+        var dLon = deg2rad(lon2 - lon1);
+        var a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c; // Distance in km
+        return d * 1000; // Distance in meters
+    };
 
-            navigation.navigate("UserScreen");
+    const deg2rad = (deg) => {
+        return deg * (Math.PI / 180);
+    };
 
-        };
-
+    const goToUserScreen = () => {
+        navigation.navigate("UserScreen");
+    };
 
     return (
         <View style={styles.container}>
@@ -187,7 +215,7 @@ const MapScreen = ({ }) => {
                 fetchDetails={true}
                 GooglePlacesSearchQuery={{
                     rankby: 'distance',
-                  }}
+                }}
                 onPress={(data, details = null) => {
                     const { lat, lng } = details.geometry.location;
                     updateState({
@@ -195,15 +223,15 @@ const MapScreen = ({ }) => {
                             latitude: lat,
                             longitude: lng,
                         }
-                    })
+                    });
                 }}
                 query={{
                     key: googleapikey,
                     language: 'en',
                     types: 'establishment',
-                    location: '45.7494,21.2272',    // Coordinates for Timisoara
-                    radius: 50000,                  // 50 km radius
-                    rankby: distance,
+                    location: '45.7494,21.2272', // Coordinates for Timisoara
+                    radius: 50000, // 50 km radius
+                    rankby: 'distance',
                 }}
                 nearbyPlacesAPI='GooglePlacesSearch'
                 debounce={300}
@@ -221,7 +249,7 @@ const MapScreen = ({ }) => {
 
             {Object.keys(destinationCords).length > 0 && (
                 <TouchableOpacity
-                    style={styles.clearButton} 
+                    style={styles.clearButton}
                     onPress={clearDestination}
                 >
                     <Text style={styles.clearButtonText}>X</Text>
@@ -232,47 +260,49 @@ const MapScreen = ({ }) => {
                     style={styles.startRouteButton}
                     onPress={startRoute}
                 >
-                    <Text style={styles.startRouteButtonText}>Start route?</Text>    
+                    <Text style={styles.startRouteButtonText}>Start route?</Text>
                 </TouchableOpacity>
             )}
 
-                <TouchableOpacity
-                /////////////////////////////////////WORK BUTTON
-                    style={styles.workButton}
-                >
-                    <Text style={styles.workButtonText}>Work</Text>  
-                    <Image source={imagePath.imWork} style={{width:20, height:25,}} />    
-                </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.workButton}
+                onPress={setDestinationToWork}
+            >
+                <View style={styles.iconTextRow}>
+                    <Text style={styles.workButtonText}>Work</Text>
+                    <Image source={imagePath.imWork} style={styles.icon} />
+                </View>
+            </TouchableOpacity>
 
-                <TouchableOpacity
-                ////////////////////////////////////USER BUTTON
-                    style={styles.userButton}
-                    onPress={goToUserScreen}
-                >
+            <TouchableOpacity
+                style={styles.userButton}
+                onPress={goToUserScreen}
+            >
+                <View style={styles.iconTextRow}>
                     <Text style={styles.userButtonText}>User</Text>
-                    <Image source={imagePath.imUser} style={{width:20, height:25,}} />     
-                </TouchableOpacity>
+                    <Image source={imagePath.imUser} style={styles.icon} />
+                </View>
+            </TouchableOpacity>
 
-            
-                <TouchableOpacity
-                /////////////////////////////////////HOME BUTTON
-                    style={styles.homeButton}
-                >
+            <TouchableOpacity
+                style={styles.homeButton}
+                onPress={setDestinationToHome}
+            >
+                <View style={styles.iconTextRow}>
                     <Text style={styles.homeButtonText}>Home</Text>
-                    <Image source={imagePath.imHome} style={{width:20, height:25,}} />  
-                </TouchableOpacity>
+                    <Image source={imagePath.imHome} style={styles.icon} />
+                </View>
+            </TouchableOpacity>
 
-                
-            
+            {routeStarted !== 0 && distance !== 0 && time !== 0 && (
+                <View style={{ position: 'absolute', alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100, }}>
+                    <Text style={{ color: '#ff0000', fontSize: 15, }}>Time left: {time.toFixed(0)} minutes</Text>
+                    <Text style={{ color: '#aa00ff', fontSize: 15, }}>Distance left: {distance.toFixed(0)} Km</Text>
+                </View>
+            )}
 
-            {routeStarted !== 0 && distance !== 0 && time !== 0 && (<View style={{position: 'absolute' ,alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100,}}>
-                <Text style={{color: '#ff0000', fontSize: 15,}}>Time left: {time.toFixed(0)} minutes</Text>
-                <Text style={{color: '#aa00ff', fontSize: 15,}}>Distance left: {distance.toFixed(0)} Km</Text>
-            </View>)}
-            
             <View style={{ flex: 1 }}>
                 <MapView
-                //showsUserLocation
                     ref={mapRef}
                     style={StyleSheet.absoluteFill}
                     initialRegion={{
@@ -291,7 +321,7 @@ const MapScreen = ({ }) => {
                             style={{
                                 width: 20,
                                 height: 20,
-                                transform: [{rotate: `${heading}deg`}]
+                                transform: [{ rotate: `${heading}deg` }]
                             }}
                             resizeMode="contain"
                         />
@@ -318,15 +348,15 @@ const MapScreen = ({ }) => {
                             fetchTime(result.distance, result.duration),
                                 mapRef.current.fitToCoordinates(result.coordinates, {
                                     edgePadding: {
-                                         right: 30,
-                                         bottom: 100,
-                                         left: 30,
-                                         top: 100,
+                                        right: 30,
+                                        bottom: 100,
+                                        left: 30,
+                                        top: 100,
                                     },
                                 });
                         }}
                         onError={(errorMessage) => {
-                             console.log('GOT AN ERROR');
+                            console.log('GOT AN ERROR');
                         }}
                     />)}
                 </MapView>
@@ -339,21 +369,20 @@ const MapScreen = ({ }) => {
                     onPress={onCenter}
                 >
                     <Image source={imagePath.imIndicator} />
-                </TouchableOpacity> 
-                
+                </TouchableOpacity>
 
-            {Object.keys(destinationCords).length > 0 && (
-                <TouchableOpacity
-                    style={{
-                        position: 'absolute',
-                        bottom: 10,
-                        left: 8
-                    }}
-                    onPress={onDestination}
-                >
-                    <Image source={imagePath.imMarker} />
-                </TouchableOpacity> 
-            )}
+                {Object.keys(destinationCords).length > 0 && (
+                    <TouchableOpacity
+                        style={{
+                            position: 'absolute',
+                            bottom: 10,
+                            left: 8
+                        }}
+                        onPress={onDestination}
+                    >
+                        <Image source={imagePath.imMarker} />
+                    </TouchableOpacity>
+                )}
             </View>
             <Loader isLoading={isLoading} />
         </View>
@@ -404,7 +433,6 @@ const styles = StyleSheet.create({
         top: 30, // Adjust as needed
         left: 12,
         right: 300,
-        //transform: [{ translateX: -50 }],
         zIndex: 2,
         backgroundColor: 'brown',
         borderRadius: 10,
@@ -424,7 +452,6 @@ const styles = StyleSheet.create({
         top: 30, // Adjust as needed
         left: 300,
         right: 12,
-        //transform: [{ translateX: -50 }],
         zIndex: 2,
         backgroundColor: 'brown',
         borderRadius: 12,
@@ -444,7 +471,6 @@ const styles = StyleSheet.create({
         top: 30, // Adjust as needed
         left: 120,
         right: 120,
-        //transform: [{ translateX: -50 }],
         zIndex: 2,
         backgroundColor: 'blue',
         borderRadius: 12,
@@ -458,6 +484,15 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    iconTextRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    icon: {
+        width: 20,
+        height: 25,
+        marginLeft: 5,
     },
 });
 

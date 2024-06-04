@@ -5,7 +5,7 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import googleapikey from '../utils/google_api_key';
 import imagePath from '../utils/imagePath';
 
-export default function UserScreen() {
+export default function UserScreen({ }) {
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
 
@@ -20,9 +20,9 @@ export default function UserScreen() {
     const { time, distance, workCords, homeCords, destinationCords } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    const onPress = () => {
-        navigation.goBack();
-    };
+    // const onGoBack = () => {
+    //     navigation.goBack();
+    // };
 
     const setWork = () => {
         if (destinationCords.latitude && destinationCords.longitude) {
@@ -37,7 +37,7 @@ export default function UserScreen() {
             Alert.alert('Work coordinates saved successfully');
             console.log(`Work coordinates saved: Latitude: ${workCords.latitude}, Longitude: ${workCords.longitude}`);
         } else {
-            Alert.alert('Please select a destination first');
+            Alert.alert('Work location has been erased.  Please select a destination first!');
         }
     };
 
@@ -54,14 +54,15 @@ export default function UserScreen() {
             Alert.alert('Home coordinates saved successfully');
             console.log(`Work coordinates saved: Latitude: ${homeCords.latitude}, Longitude: ${homeCords.longitude}`);
         } else {
-            Alert.alert('Please select a destination first');
+            Alert.alert('Home location has been erased.  Please select a destination first!');
         }
     };
 
     return (
         <View style={styles.container}>
             <TouchableOpacity
-                onPress={onPress}
+                //onPress={onGoBack}
+                onPress={() => navigation.navigate("MapScreen", {workCords, homeCords})}
                 style={styles.backButton}
             >
                 <Text style={styles.backButtonText}>Go Back</Text>
