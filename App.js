@@ -5,6 +5,7 @@ import FlashMessage from 'react-native-flash-message';
 
 //Screens
 import MapScreen from './Screens/MapScreen';
+import UserScreen from './Screens/UserScreen';
 
 
 const App = () => {
@@ -16,6 +17,10 @@ const App = () => {
         <Stack.Screen name="MapScreen" 
         component={MapScreen}
         options={{ headerShown: false }}  
+        />
+        <Stack.Screen name="UserScreen"
+        component={UserScreen}
+        options={{ headerShown: false }}
         />
         
       </Stack.Navigator>

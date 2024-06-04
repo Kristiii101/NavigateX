@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform,Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform, Alert} from 'react-native';
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import googleapikey from '../utils/google_api_key';
 import MapViewDirections from 'react-native-maps-directions';
@@ -8,6 +8,7 @@ import { locationPermission, getCurrentLocation } from '../Components/getCurrent
 import regions from '../utils/regions';
 import imagePath from '../utils/imagePath';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { useNavigation } from '@react-navigation/native';
 
 const screen = Dimensions.get('window');
 const ASPECT_RATIO = screen.width / screen.height;
@@ -18,6 +19,7 @@ const MapScreen = ({ }) => {
     const mapRef = useRef()
     const markerRef = useRef()
     const googlePlacesRef = useRef();
+    const navigation = useNavigation()
 
     const [state, setState] = useState({
         curLoc: {
@@ -166,6 +168,13 @@ const MapScreen = ({ }) => {
             return deg * (Math.PI / 180);
         };
 
+        const goToUserScreen = () => {
+
+            navigation.navigate("UserScreen");
+
+        };
+
+
     return (
         <View style={styles.container}>
             <GooglePlacesAutocomplete
@@ -228,29 +237,32 @@ const MapScreen = ({ }) => {
             )}
 
                 <TouchableOpacity
+                /////////////////////////////////////WORK BUTTON
                     style={styles.workButton}
-                    //onPress={startRoute}
                 >
                     <Text style={styles.workButtonText}>Work</Text>  
                     <Image source={imagePath.imWork} style={{width:20, height:25,}} />    
                 </TouchableOpacity>
-            
-                <TouchableOpacity
-                    style={styles.homeButton}
-                    //onPress={startRoute}
-                >
-                    <Text style={styles.homeButtonText}>Home</Text>
-                    <Image source={imagePath.imHome} style={{width:20, height:25,}} />  
-                </TouchableOpacity>
 
                 <TouchableOpacity
+                ////////////////////////////////////USER BUTTON
                     style={styles.userButton}
-                    //onPress={startRoute}
+                    onPress={goToUserScreen}
                 >
                     <Text style={styles.userButtonText}>User</Text>
                     <Image source={imagePath.imUser} style={{width:20, height:25,}} />     
                 </TouchableOpacity>
 
+            
+                <TouchableOpacity
+                /////////////////////////////////////HOME BUTTON
+                    style={styles.homeButton}
+                >
+                    <Text style={styles.homeButtonText}>Home</Text>
+                    <Image source={imagePath.imHome} style={{width:20, height:25,}} />  
+                </TouchableOpacity>
+
+                
             
 
             {routeStarted !== 0 && distance !== 0 && time !== 0 && (<View style={{position: 'absolute' ,alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100,}}>
@@ -351,6 +363,8 @@ const MapScreen = ({ }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        paddingTop: 120,
+        backgroundColor: '#deddee'
     },
     clearButton: {
         position: 'absolute',
