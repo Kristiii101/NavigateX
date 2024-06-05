@@ -163,7 +163,7 @@ const MapScreen = () => {
             googlePlacesRef.current.setAddressText('Work');
             console.log(`Navigating to work: Latitude: ${workCords.latitude}, Longitude: ${workCords.longitude}`);
         } else {
-            Alert.alert('Work coordinates not set');
+            Alert.alert('Work coordinates not set, please set them from the User page!');
         }
     };
 
@@ -178,7 +178,7 @@ const MapScreen = () => {
             googlePlacesRef.current.setAddressText('Home');
             console.log(`Navigating to home: Latitude: ${homeCords.latitude}, Longitude: ${homeCords.longitude}`);
         } else {
-            Alert.alert('Home coordinates not set');
+            Alert.alert('Home coordinates not set, please set them from the User page!');
         }
     };
 
@@ -200,7 +200,7 @@ const MapScreen = () => {
     };
 
     const goToUserScreen = () => {
-        navigation.navigate("UserScreen");
+        navigation.navigate("UserScreen", { curLoc, destinationCords });
     };
 
     return (
@@ -228,6 +228,7 @@ const MapScreen = () => {
                 query={{
                     key: googleapikey,
                     language: 'en',
+                    //type: 'address',
                     types: 'establishment',
                     location: '45.7494,21.2272', // Coordinates for Timisoara
                     radius: 50000, // 50 km radius
@@ -258,7 +259,7 @@ const MapScreen = () => {
             {Object.keys(destinationCords).length > 0 && (
                 <TouchableOpacity
                     style={styles.startRouteButton}
-                    onPress={startRoute}
+                    onPress={() => {startRoute();}}
                 >
                     <Text style={styles.startRouteButtonText}>Start route?</Text>
                 </TouchableOpacity>
@@ -380,7 +381,7 @@ const MapScreen = () => {
                         }}
                         onPress={onDestination}
                     >
-                        <Image source={imagePath.imMarker} />
+                        <Image source={imagePath.imMarker} /> 
                     </TouchableOpacity>
                 )}
             </View>
@@ -434,7 +435,7 @@ const styles = StyleSheet.create({
         left: 12,
         right: 300,
         zIndex: 2,
-        backgroundColor: 'brown',
+        backgroundColor: '#7f3f0f',
         borderRadius: 10,
         paddingVertical: 10,
         paddingHorizontal: 10,
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
         left: 300,
         right: 12,
         zIndex: 2,
-        backgroundColor: 'brown',
+        backgroundColor: '#228822',
         borderRadius: 12,
         paddingVertical: 10,
         paddingHorizontal: 10,

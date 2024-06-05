@@ -1,37 +1,38 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Alert, FlatList } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import googleapikey from '../utils/google_api_key';
 import imagePath from '../utils/imagePath';
+import Modal from 'react-native-modal';
 
 export default function UserScreen({ }) {
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
+    const route = useRoute();
+    const { curLoc = {}, destinationCords = {} } = route.params || {};
 
     const [state, setState] = useState({
         time: 0,
         distance: 0,
         workCords: {},
         homeCords: {},
-        destinationCords: {},
+        setCords: {},
+        pastRoutes: [],
+        isModalVisible: false,
     });
 
-    const { time, distance, workCords, homeCords, destinationCords } = state;
+    const { time, distance, workCords, homeCords, setCords, pastRoutes, isModalVisible } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    // const onGoBack = () => {
-    //     navigation.goBack();
-    // };
-
     const setWork = () => {
-        if (destinationCords.latitude && destinationCords.longitude) {
+        if (setCords.latitude && setCords.longitude) {
             updateState({
                 workCords: {
-                    latitude: destinationCords.latitude,
-                    longitude: destinationCords.longitude
+                    latitude: setCords.latitude,
+                    longitude: setCords.longitude
                 },
-                destinationCords: {}
+                setCords: {}
             });
             googlePlacesRef.current.setAddressText('');
             Alert.alert('Work coordinates saved successfully');
@@ -42,13 +43,13 @@ export default function UserScreen({ }) {
     };
 
     const setHome = () => {
-        if (destinationCords.latitude && destinationCords.longitude) {
+        if (setCords.latitude && setCords.longitude) {
             updateState({
                 homeCords: {
-                    latitude: destinationCords.latitude,
-                    longitude: destinationCords.longitude
+                    latitude: setCords.latitude,
+                    longitude: setCords.longitude
                 },
-                destinationCords: {}
+                setCords: {}
             });
             googlePlacesRef.current.setAddressText('');
             Alert.alert('Home coordinates saved successfully');
@@ -58,14 +59,34 @@ export default function UserScreen({ }) {
         }
     };
 
+    const viewPastRoutes = () => {
+        addPastRoute();
+        updateState({ isModalVisible: true });
+        // setTimeout(() => {
+        //     updateState({ pastRoutes: [] });
+        // }, 1000);
+    };
+
+    const closeModal = () => {
+        updateState({ isModalVisible: false });
+    };
+
+    const addPastRoute = () => {
+        const newRoute = {
+            start: { latitude: curLoc.latitude, longitude: curLoc.longitude },
+            destination: { latitude: destinationCords.latitude, longitude: destinationCords.longitude },
+        };
+        updateState({ pastRoutes: [...pastRoutes, newRoute] });
+    };
+
     return (
         <View style={styles.container}>
             <TouchableOpacity
-                //onPress={onGoBack}
                 onPress={() => navigation.navigate("MapScreen", {workCords, homeCords})}
                 style={styles.backButton}
             >
                 <Text style={styles.backButtonText}>Go Back</Text>
+                <Image source={imagePath.imBackLogo} style={styles.icon} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -73,7 +94,7 @@ export default function UserScreen({ }) {
                 style={styles.setWorkButton}
             >
                 <View style={styles.iconTextRow}>
-                    <Text style={styles.setWorkButtonText}>Set Work</Text>
+                    <Text style={styles.setWorkNHomeButtonText}>Set Work</Text>
                     <Image source={imagePath.imWork} style={styles.icon} />
                 </View>
             </TouchableOpacity>
@@ -83,7 +104,7 @@ export default function UserScreen({ }) {
                 style={styles.setHomeButton}
             >
                 <View style={styles.iconTextRow}>
-                    <Text style={styles.setHomeButtonText}>Set Home</Text>
+                    <Text style={styles.setWorkNHomeButtonText}>Set Home</Text>
                     <Image source={imagePath.imHome} style={styles.icon} />
                 </View>
             </TouchableOpacity>
@@ -91,10 +112,20 @@ export default function UserScreen({ }) {
             <View style={styles.textContainer}>
                 <Text style={styles.setText}>  Set work and home locations!</Text>
             </View>
+
+            <TouchableOpacity
+                style={styles.routesButton}
+                onPress={viewPastRoutes}
+            >
+                <View style={styles.iconTextRow}>
+                    <Image source={imagePath.imRoutes} style={styles.icon} />
+                    <Text style={styles.setWorkNHomeButtonText}> View past routes </Text>
+                </View>
+            </TouchableOpacity>
             
             <GooglePlacesAutocomplete
                 ref={googlePlacesRef}
-                placeholder='Set HOME / WORK'
+                placeholder='Search and set HOME / WORK address'
                 minLength={2}
                 autoFocus={false}
                 returnKeyType={'search'}
@@ -106,7 +137,7 @@ export default function UserScreen({ }) {
                 onPress={(data, details = null) => {
                     const { lat, lng } = details.geometry.location;
                     updateState({
-                        destinationCords: {
+                        setCords: {
                             latitude: lat,
                             longitude: lng,
                         }
@@ -133,6 +164,30 @@ export default function UserScreen({ }) {
                     listView: { backgroundColor: 'white' }
                 }}
             />
+
+            <Modal
+                isVisible={isModalVisible}
+                onBackdropPress={closeModal}
+                style={styles.modal}
+            >
+                <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Past Routes</Text>
+                    <FlatList
+                        data={pastRoutes}
+                        keyExtractor={(item, index) => index.toString()}
+                        renderItem={({ item }) => (
+                            <View style={styles.routeItem}>
+                                <Text>Start: {`Latitude: ${item.start.latitude}, Longitude: ${item.start.longitude}`}</Text>
+                                <Text>Destination: {`Latitude: ${item.destination.latitude}, Longitude: ${item.destination.longitude}`}</Text>
+                            </View>
+                        )}
+                    />
+                    <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                        <Text style={styles.closeButtonText}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
         </View>
     );
 }
@@ -140,16 +195,18 @@ export default function UserScreen({ }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#656565',
     },
     backButton: {
         position: 'absolute',
         top: 30,
-        left: 10,
+        right: 10,
         zIndex: 2,
-        backgroundColor: 'blue',
+        //backgroundColor: '#000088',
+        backgroundColor: '#aa0000',
         borderRadius: 12,
-        paddingVertical: 10,
-        paddingHorizontal: 45,
+        paddingVertical: 5,
+        paddingHorizontal: 5,
         justifyContent: 'space-evenly',
         alignItems: 'center',
         flexDirection: 'row',
@@ -165,7 +222,7 @@ const styles = StyleSheet.create({
         left: 12,
         right: 280,
         zIndex: 2,
-        backgroundColor: 'brown',
+        backgroundColor: '#228822',
         borderRadius: 10,
         paddingVertical: 10,
         paddingHorizontal: 10,
@@ -173,7 +230,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flexDirection: 'row',
     },
-    setWorkButtonText: {
+    setWorkNHomeButtonText: {
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
@@ -184,7 +241,7 @@ const styles = StyleSheet.create({
         left: 280,
         right: 12,
         zIndex: 2,
-        backgroundColor: 'brown',
+        backgroundColor: '#228822',
         borderRadius: 12,
         paddingVertical: 10,
         paddingHorizontal: 10,
@@ -192,13 +249,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flexDirection: 'row',
     },
-    setHomeButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
     setText: {
-        color: 'green',
+        color: 'black',
         fontSize: 18,
     },
     textContainer: {
@@ -216,5 +268,50 @@ const styles = StyleSheet.create({
         width: 20,
         height: 25,
         marginLeft: 5,
+    },
+    routesButton: {
+        position: 'absolute',
+        top: 30,
+        left: 10,
+        zIndex: 2,
+        backgroundColor: '#000088',
+        borderRadius: 12,
+        paddingVertical: 5,
+        paddingHorizontal: 4,
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    modal: {
+        justifyContent: 'flex-end',
+        margin: 0,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 22,
+        borderTopLeftRadius: 17,
+        borderTopRightRadius: 17,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 12,
+    },
+    routeItem: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+        paddingVertical: 10,
+    },
+    closeButton: {
+        backgroundColor: '#228822',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        marginTop: 20,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });

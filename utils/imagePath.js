@@ -6,4 +6,6 @@ export default {
     imWork: require("../Images/workLogo.png"),
     imHome: require("../Images/homeLogo.png"),
     imUser: require("../Images/userLogo.png"),
+    imBackLogo: require("../Images/backLogo.png"),
+    imRoutes: require("../Images/routesLogo.png"),
 }
