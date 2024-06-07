@@ -51,7 +51,7 @@ const MapScreen = () => {
         const locPermissionDenied = await locationPermission();
         if (locPermissionDenied) {
             const { latitude, longitude, heading } = await getCurrentLocation();
-            console.log("get live location after 6 second", heading);
+            //console.log("get live location after 6 second", heading);
             animate(latitude, longitude);
             updateState({
                 heading: heading,
@@ -83,7 +83,7 @@ const MapScreen = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             getLiveLocation();
-        }, 6000); // change interval to 100 for faster location update
+        }, 1000); // change interval to 100 for faster location update
         return () => clearInterval(interval);
     }, []);
 
@@ -199,10 +199,6 @@ const MapScreen = () => {
         return deg * (Math.PI / 180);
     };
 
-    const goToUserScreen = () => {
-        navigation.navigate("UserScreen", { curLoc, destinationCords });
-    };
-
     return (
         <View style={styles.container}>
             <GooglePlacesAutocomplete
@@ -277,10 +273,10 @@ const MapScreen = () => {
 
             <TouchableOpacity
                 style={styles.userButton}
-                onPress={goToUserScreen}
+                onPress={() => navigation.navigate("UserScreen", { curLoc, destinationCords })}
             >
                 <View style={styles.iconTextRow}>
-                    <Text style={styles.userButtonText}>User</Text>
+                    <Text style={styles.userButtonText}>Navigator</Text>
                     <Image source={imagePath.imUser} style={styles.icon} />
                 </View>
             </TouchableOpacity>

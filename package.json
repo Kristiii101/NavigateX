@@ -9,7 +9,9 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@firebase/auth": "^1.7.4",
     "@mapbox/polyline": "^1.2.1",
+    "@react-native-picker/picker": "^2.7.6",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/stack": "^6.3.29",
     "@types/react": "~18.2.45",
@@ -18,9 +20,11 @@
     "expo-constants": "~15.4.6",
     "expo-linking": "~6.2.2",
     "expo-location": "~16.5.5",
+    "expo-module-scripts": "^3.5.2",
     "expo-router": "~3.4.8",
     "expo-sensors": "~12.9.1",
     "expo-status-bar": "~1.11.1",
+    "firebase": "^10.12.2",
     "geolocation": "^0.2.0",
     "react": "18.2.0",
     "react-native": "0.73.6",

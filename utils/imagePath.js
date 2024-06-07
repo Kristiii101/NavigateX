@@ -8,4 +8,6 @@ export default {
     imUser: require("../Images/userLogo.png"),
     imBackLogo: require("../Images/backLogo.png"),
     imRoutes: require("../Images/routesLogo.png"),
+    imCarLogo: require("../Images/carLogo.png"),
+    imLogo: require("../Images/NavigateXLOGO.png"),
 }
