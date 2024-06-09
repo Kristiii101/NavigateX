@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform, Alert } from 'react-native';
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import googleapikey from '../utils/google_api_key';
@@ -8,7 +8,7 @@ import { locationPermission, getCurrentLocation } from '../Components/getCurrent
 import regions from '../utils/regions';
 import imagePath from '../utils/imagePath';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { ref, push, set, get } from 'firebase/database';
 import { db, Firebase_Auth } from '../utils/FireBaseConfig';
 
@@ -22,7 +22,7 @@ const MapScreen = () => {
     const markerRef = useRef();
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
-    const route = useRoute();
+    //const route = useRoute();
     //const { workCords = {}, homeCords = {} } = route.params || {};
     const [user, setUser] = useState(null);
 
@@ -43,35 +43,37 @@ const MapScreen = () => {
         routeStarted: 0,
         workCords: {},
         homeCords: {},
+        userId: Firebase_Auth.currentUser ? Firebase_Auth.currentUser.uid : null,
     });
 
     const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted, userId, workCords, homeCords } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const currentUser = Firebase_Auth.currentUser;
-            if (currentUser) {
-                setUser(currentUser);
-                const userRef = ref(db, `users/${currentUser.uid}`);
-                const snapshot = await get(userRef);
-                // console.log(`snapshot.val()}: ${JSON.stringify(snapshot.val())}`);
-                // console.log(`workCords: ${JSON.stringify(snapshot.val().workCords)}`);
-                // console.log(`homeCords: ${JSON.stringify(snapshot.val().homeCords)}`);
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    updateState({
-                        workCords: userData.workCords || {},
-                        homeCords: userData.homeCords || {},
-                    });
-                    console.log(get)
+    useFocusEffect (
+        useCallback(() => {
+            const fetchUserData = async () => {
+                const currentUser = Firebase_Auth.currentUser;
+                if (currentUser) {
+                    setUser(currentUser);
+                    const userRef = ref(db, `users/${currentUser.uid}`);
+                    const snapshot = await get(userRef);
+                     console.log(`snapshot.val()}: ${JSON.stringify(snapshot.val())}`);
+                    // console.log(`workCords: ${JSON.stringify(snapshot.val().workCords)}`);
+                    // console.log(`homeCords: ${JSON.stringify(snapshot.val().homeCords)}`);
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        updateState({
+                            workCords: userData.workCords || {},
+                            homeCords: userData.homeCords || {},
+                        });
+                        console.log(get)
+                    }
                 }
-            }
-        };
-        fetchUserData();
-        getLiveLocation();
-    }, []);
-
+            };
+            fetchUserData();
+            getLiveLocation();
+        }, [])
+    );
 
     const getLiveLocation = async () => {
         const locPermissionDenied = await locationPermission();

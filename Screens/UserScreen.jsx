@@ -34,7 +34,7 @@ export default function UserScreen({ }) {
     const { time, distance, workCords, homeCords, setCords, pastRoutes, isRoutesModalVisible, isCarModalVisible } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    useEffect(() => {
+    useEffect (() => {
         const fetchUserData = async () => {
             const currentUser = Firebase_Auth.currentUser;
             console.log(`currentUser: ${JSON.stringify(currentUser)}`);
