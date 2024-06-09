@@ -76,9 +76,25 @@ const MapScreen = () => {
     );
 
     const getLiveLocation = async () => {
-        const locPermissionDenied = await locationPermission();
-        if (locPermissionDenied) {
-            const { latitude, longitude, heading } = await getCurrentLocation();
+        //const locPermissionDenied = await locationPermission();
+        // if (locPermissionDenied) {
+        //     const { latitude, longitude, heading } = await getCurrentLocation();
+        //     console.log(latitude, longitude, heading);
+        //     animate(latitude, longitude);
+        //     updateState({
+        //         heading: heading,
+        //         curLoc: { latitude, longitude },
+        //         coordinate: new AnimatedRegion({
+        //             latitude: latitude,
+        //             longitude: longitude,
+        //             latitudeDelta: LATITUDE_DELTA,
+        //             longitudeDelta: LONGITUDE_DELTA
+        //         })
+        //     });
+        // }
+
+        const { latitude, longitude, heading } = await getCurrentLocation();
+            //console.log(latitude, longitude, heading);
             animate(latitude, longitude);
             updateState({
                 heading: heading,
@@ -90,7 +106,6 @@ const MapScreen = () => {
                     longitudeDelta: LONGITUDE_DELTA
                 })
             });
-        }
 
         // Check if current location is near the destination
         if (Object.keys(destinationCords).length > 0) {
@@ -110,6 +125,7 @@ const MapScreen = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             getLiveLocation();
+            //console.log('live location updated');
         }, 1000);
         return () => clearInterval(interval);
     }, []);
@@ -333,9 +349,9 @@ const MapScreen = () => {
             </TouchableOpacity>
 
             {routeStarted !== 0 && distance !== 0 && time !== 0 && (
-                <View style={{ position: 'absolute', alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#00ff00', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100, }}>
-                    <Text style={{ color: '#ff0000', fontSize: 15, }}>Time left: {time.toFixed(0)} minutes</Text>
-                    <Text style={{ color: '#aa00ff', fontSize: 15, }}>Distance left: {distance.toFixed(0)} Km</Text>
+                <View style={{ position: 'absolute', alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#228822', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100, }}>
+                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Time left: {time.toFixed(0)} minutes</Text>
+                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Distance left: {distance.toFixed(0)} Km</Text>
                 </View>
             )}
 
