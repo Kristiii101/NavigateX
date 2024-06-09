@@ -1,22 +1,24 @@
-import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Alert, FlatList, TextInput } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Alert, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import googleapikey from '../utils/google_api_key';
 import imagePath from '../utils/imagePath';
 import Modal from 'react-native-modal';
-import { Firebase_Auth } from '../utils/FireBaseConfig';
+import { Firebase_Auth, db } from '../utils/FireBaseConfig';
+import { ref, set, get } from 'firebase/database';
 
 export default function UserScreen({ }) {
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
-    const route = useRoute();
-    const { curLoc = {}, destinationCords = {} } = route.params || {};
     const [carType, setCarType] = useState('');
     const [fuelType, setFuelType] = useState('');
     const [gasConsumption, setGasConsumption] = useState('');
     const [gasCost, setGasCost] = useState('');
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [expandedItem, setExpandedItem] = useState(null);
 
     const [state, setState] = useState({
         time: 0,
@@ -32,7 +34,52 @@ export default function UserScreen({ }) {
     const { time, distance, workCords, homeCords, setCords, pastRoutes, isRoutesModalVisible, isCarModalVisible } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    const setWork = () => {
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const currentUser = Firebase_Auth.currentUser;
+            if (currentUser) {
+                setUser(currentUser);
+                const userRef = ref(db, `users/${currentUser.uid}`);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    setCarType(userData.carType || '');
+                    setFuelType(userData.fuelType || '');
+                    setGasConsumption(userData.gasConsumption || '');
+                    setGasCost(userData.gasCost || '');
+                    updateState({
+                        workCords: userData.workCords || {},
+                        homeCords: userData.homeCords || {},
+                        pastRoutes: userData.pastRoutes || [],
+                    });
+                }
+            }
+            setLoading(false);
+        };
+        fetchUserData();
+    }, []);
+
+    const saveUserData = async () => {
+        if (user) {
+            const userRef = ref(db, `users/${user.uid}`);
+            const snapshot = await get(userRef);
+            const existingData = snapshot.exists() ? snapshot.val() : {};
+            const updatedData = {
+                workCords: workCords.latitude ? workCords : existingData.workCords || {},
+                homeCords: homeCords.latitude ? homeCords : existingData.homeCords || {},
+                carType: carType || existingData.carType || '',
+                fuelType: fuelType || existingData.fuelType || '',
+                gasConsumption: gasConsumption || existingData.gasConsumption || '',
+                gasCost: gasCost || existingData.gasCost || '',
+                pastRoutes: existingData.pastRoutes || [],
+            };
+
+            await set(userRef, updatedData);
+            console.log('User data saved successfully!');
+        }
+    };
+
+    const setWork = async () => {
         if (setCords.latitude && setCords.longitude) {
             updateState({
                 workCords: {
@@ -41,15 +88,16 @@ export default function UserScreen({ }) {
                 },
                 setCords: {}
             });
+            await saveUserData();
+            console.log('Work Coordinates Updated:', setCords);
             googlePlacesRef.current.setAddressText('');
             Alert.alert('Work coordinates saved successfully');
-            console.log(`Work coordinates saved: Latitude: ${workCords.latitude}, Longitude: ${workCords.longitude}`);
         } else {
-            Alert.alert('Work location has been erased.  Please select a destination first!');
+            Alert.alert('Please select a destination first!');
         }
     };
 
-    const setHome = () => {
+    const setHome = async () => {
         if (setCords.latitude && setCords.longitude) {
             updateState({
                 homeCords: {
@@ -58,20 +106,45 @@ export default function UserScreen({ }) {
                 },
                 setCords: {}
             });
+            await saveUserData();
+            console.log('Home Coordinates Updated:', setCords);
             googlePlacesRef.current.setAddressText('');
             Alert.alert('Home coordinates saved successfully');
-            console.log(`Work coordinates saved: Latitude: ${homeCords.latitude}, Longitude: ${homeCords.longitude}`);
         } else {
-            Alert.alert('Home location has been erased.  Please select a destination first!');
+            Alert.alert('Please select a destination first!');
         }
     };
 
-    const viewPastRoutes = () => {
-        addPastRoute();
-        updateState({ isRoutesModalVisible: true });
-        // setTimeout(() => {
-        //     updateState({ pastRoutes: [] });
-        // }, 1000);
+    const viewPastRoutes = async () => {
+        if (user) {
+            const userRef = ref(db, `users/${user.uid}/pastRoutes`);
+            const snapshot = await get(userRef);
+            if (snapshot.exists()) {
+                const routesData = snapshot.val();
+                const formattedRoutes = Object.values(routesData).map(route => {
+                    const fuelConsumed = ((route.distance * parseFloat(gasConsumption)) / 100).toFixed(2);
+                    const moneySpent = (fuelConsumed * parseFloat(gasCost)).toFixed(2);
+                    return {
+                        ...route,
+                        start: {
+                            latitude: route.start.latitude.toFixed(2),
+                            longitude: route.start.longitude.toFixed(2),
+                        },
+                        destination: {
+                            latitude: route.destination.latitude.toFixed(2),
+                            longitude: route.destination.longitude.toFixed(2),
+                        },
+                        time: (route.time / 60).toFixed(2),  // convert to minutes
+                        distance: route.distance.toFixed(2),  // convert to kilometers
+                        fuelConsumed,
+                        moneySpent,
+                    };
+                });
+                updateState({ pastRoutes: formattedRoutes, isRoutesModalVisible: true });
+            } else {
+                Alert.alert('No past routes found');
+            }
+        }
     };
 
     const carInfo = () => {
@@ -83,20 +156,18 @@ export default function UserScreen({ }) {
         updateState({ isCarModalVisible: false });
     };
 
-    const addPastRoute = () => {
-        const newRoute = {
-            start: { latitude: curLoc.latitude, longitude: curLoc.longitude },
-            destination: { latitude: destinationCords.latitude, longitude: destinationCords.longitude },
-        };
-        updateState({ pastRoutes: [...pastRoutes, newRoute] });
-    };
-
-    
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
             <TouchableOpacity
-                onPress={() => navigation.navigate("MapScreen", {workCords, homeCords})}
+                onPress={() => navigation.navigate("MapScreen", { workCords, homeCords, userId: user.uid })}
                 style={styles.backButton}
             >
                 <Text style={styles.backButtonText}>Go Back</Text>
@@ -148,11 +219,11 @@ export default function UserScreen({ }) {
             </TouchableOpacity>
 
             <View style={styles.Lgoos}>
-                    <Image source={imagePath.imLogo} style={styles.logo} />
+                <Image source={imagePath.imLogo} style={styles.logo} />
             </View>
 
             <TouchableOpacity
-            onPress={() => Firebase_Auth.signOut()}
+                onPress={() => Firebase_Auth.signOut()}
                 style={styles.logOutButton}
             >
                 <View style={styles.iconTextRow}>
@@ -212,33 +283,30 @@ export default function UserScreen({ }) {
                     <FlatList
                         data={pastRoutes}
                         keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item }) => (
-                            <View style={styles.routeItem}>
-                                <Text>Start: {`Latitude: ${item.start.latitude}, Longitude: ${item.start.longitude}`}</Text>
-                                <Text>Destination: {`Latitude: ${item.destination.latitude}, Longitude: ${item.destination.longitude}`}</Text>
-                            </View>
+                        renderItem={({ item, index }) => (
+                            <TouchableOpacity onPress={() => setExpandedItem(expandedItem === index ? null : index)}>
+                                <View style={styles.routeItem}>
+                                    <Text>Start: {`Latitude: ${item.start.latitude}, Longitude: ${item.start.longitude}`}</Text>
+                                    <Text>Destination: {`Latitude: ${item.destination.latitude}, Longitude: ${item.destination.longitude}`}</Text>
+                                    {expandedItem === index && (
+                                        <>
+                                            <Text>Time: {`${item.time} minutes`}</Text>
+                                            <Text>Distance: {`${item.distance} km`}</Text>
+                                            <Text>Fuel Consumed: {`${item.fuelConsumed} liters`}</Text>
+                                            <Text>Spent on the trip: {`${item.moneySpent} $`}</Text>
+                                        </>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
                         )}
                     />
+
+
                     <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                         <Text style={styles.closeButtonText}>Close</Text>
                     </TouchableOpacity>
                 </View>
             </Modal>
-
-            {/* <Modal
-                isVisible={isCarModalVisible}
-                onBackdropPress={closeModal}
-                style={styles.modal}
-            >
-                <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Car Info</Text>
-                    <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                        <Text style={styles.closeButtonText}>Close</Text>
-                    </TouchableOpacity>
-
-                </View>
-            </Modal> */}
-
 
             <Modal
                 isVisible={isCarModalVisible}
@@ -289,6 +357,10 @@ export default function UserScreen({ }) {
                         placeholder="Enter fuel cost"
                     />
 
+                    <TouchableOpacity onPress={() => { saveUserData(); closeModal(); }} style={styles.saveButton}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                         <Text style={styles.closeButtonText}>Close</Text>
                     </TouchableOpacity>
@@ -302,6 +374,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#dedede',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     backButton: {
         position: 'absolute',
@@ -379,7 +456,6 @@ const styles = StyleSheet.create({
     logo: {
         width: 174,
         height: 153,
-        //marginLeft: 5,
     },
     routesButton: {
         position: 'absolute',
@@ -472,5 +548,16 @@ const styles = StyleSheet.create({
         width: 200,
         paddingHorizontal: 10,
         marginBottom: 12,
+    },
+    saveButton: {
+        backgroundColor: '#228822',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        marginTop: 20,
+    },
+    saveButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });

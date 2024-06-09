@@ -9,6 +9,8 @@ import regions from '../utils/regions';
 import imagePath from '../utils/imagePath';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { ref, push, set, get } from 'firebase/database';
+import { db, Firebase_Auth } from '../utils/FireBaseConfig';
 
 const screen = Dimensions.get('window');
 const ASPECT_RATIO = screen.width / screen.height;
@@ -22,6 +24,7 @@ const MapScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { workCords = {}, homeCords = {} } = route.params || {};
+    const [user, setUser] = useState(null);
 
     const [state, setState] = useState({
         curLoc: {
@@ -38,20 +41,39 @@ const MapScreen = () => {
         distance: 0,
         heading: 0,
         routeStarted: 0,
+        userId: Firebase_Auth.currentUser ? Firebase_Auth.currentUser.uid : null, // Get the current user ID
     });
 
-    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted } = state;
+    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted, userId } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
     useEffect(() => {
         getLiveLocation();
     }, []);
 
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const currentUser = Firebase_Auth.currentUser;
+            if (currentUser) {
+                setUser(currentUser);
+                const userRef = ref(db, `users/${currentUser.uid}`);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    updateState({
+                        workCords: userData.workCords || {},
+                        homeCords: userData.homeCords || {},
+                    });
+                }
+            }
+        };
+        fetchUserData();
+    }, []);
+
     const getLiveLocation = async () => {
         const locPermissionDenied = await locationPermission();
         if (locPermissionDenied) {
             const { latitude, longitude, heading } = await getCurrentLocation();
-            //console.log("get live location after 6 second", heading);
             animate(latitude, longitude);
             updateState({
                 heading: heading,
@@ -65,7 +87,7 @@ const MapScreen = () => {
             });
         }
 
-        // Verificare dacă locația curentă este aproape de destinație
+        // Check if current location is near the destination
         if (Object.keys(destinationCords).length > 0) {
             const distanceToDestination = getDistanceFromLatLonInMeters(
                 curLoc.latitude,
@@ -83,7 +105,7 @@ const MapScreen = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             getLiveLocation();
-        }, 1000); // change interval to 100 for faster location update
+        }, 1000);
         return () => clearInterval(interval);
     }, []);
 
@@ -139,10 +161,24 @@ const MapScreen = () => {
         });
     };
 
-    const startRoute = () => {
+    const startRoute = async () => {
+        if (!userId) {
+            Alert.alert('Error', 'User ID not found.');
+            return;
+        }
+
         updateState({
             routeStarted: 1
         });
+
+        const newRouteRef = push(ref(db, `users/${userId}/pastRoutes`));
+        await set(newRouteRef, {
+            start: { latitude: curLoc.latitude, longitude: curLoc.longitude },
+            destination: { latitude: destinationCords.latitude, longitude: destinationCords.longitude },
+            distance: distance,
+            time: time,
+        });
+
         mapRef.current.animateToRegion({
             latitude: curLoc.latitude,
             longitude: curLoc.longitude,
@@ -255,7 +291,7 @@ const MapScreen = () => {
             {Object.keys(destinationCords).length > 0 && (
                 <TouchableOpacity
                     style={styles.startRouteButton}
-                    onPress={() => {startRoute();}}
+                    onPress={startRoute}
                 >
                     <Text style={styles.startRouteButtonText}>Start route?</Text>
                 </TouchableOpacity>

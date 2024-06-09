@@ -1,7 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth, setPersistence, signInWithEmailAndPassword, browserSessionPersistence } from "firebase/auth";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+//import { getAnalytics } from "firebase/analytics";
+import { getDatabase } from "firebase/database";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -9,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const firebaseConfig = {
   apiKey: "AIzaSyDiVBQoaBLvv9TYzBn9VRsFELFe9Xxga_c",
   authDomain: "navigatex-da924.firebaseapp.com",
+  databaseURL: "https://navigatex-da924-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "navigatex-da924",
   storageBucket: "navigatex-da924.appspot.com",
   messagingSenderId: "655781136237",
@@ -18,18 +21,5 @@ const firebaseConfig = {
 // Initialize Firebase
 export const Firebase_App = initializeApp(firebaseConfig);
 export const Firebase_Auth = getAuth(Firebase_App);
-
-
-// export const Firebase_Persistance = initializeAuth(app, {
-//   persistence: getReactNativePersistence(AsyncStorage)
-// });
-
-// export const Firebase_Auth = getAuth(Firebase_App);
-// setPersistence(Firebase_Auth, browserSessionPersistence)
-//   .then(() => {
-//     return signInWithEmailAndPassword(auth, email, password);
-//   })
-//   .catch((error) => {
-//     const errorCode = error.code;
-//     const errorMessage = error.message;
-//   });
+//export const analytics = getAnalytics(Firebase_App);
+export const db = getDatabase(Firebase_App);

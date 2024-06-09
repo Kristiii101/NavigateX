@@ -1,67 +1,97 @@
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Button } from 'react-native'
-import React, {useState} from 'react'
-//import { useNavigation, useRoute } from '@react-navigation/native';
-import { Firebase_Auth } from '../utils/FireBaseConfig';
+import { View, StyleSheet, ActivityIndicator, Button, Text } from 'react-native';
+import React, { useState } from 'react';
+import { Firebase_Auth, db } from '../utils/FireBaseConfig';
 import { TextInput } from 'react-native-gesture-handler';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword} from 'firebase/auth'
-
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { ref, set } from 'firebase/database';
 
 const LogInScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const auth = Firebase_Auth;
 
-    const signIn = async () =>{
+    const signIn = async () => {
         setLoading(true);
-        try{
+        setError('');
+        if (!email || !password) {
+            setLoading(false);
+            setError('Email and password are required.');
+            return;
+        }
+        try {
             const response = await signInWithEmailAndPassword(auth, email, password);
-            //console.log(response);
-        } catch(error){
+            console.log(response._tokenResponse.email);
+            setEmail('');
+            setPassword('');
+        } catch (error) {
             console.log(error);
-            alert('Sign in failed: ' + error.message);
+            setError('Sign in failed: ' + error.message);
         } finally {
             setLoading(false);
         }
-    }
+    };
 
-    const signUp = async () =>{
+    const signUp = async () => {
         setLoading(true);
-        try{
+        setError('');
+        if (!email || !password) {
+            setLoading(false);
+            setError('Email and password are required.');
+            return;
+        }
+        try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
-            //console.log(response);
+            const userId = response.user.uid;
+            const userRef = ref(db, `users/${userId}`);
+            await set(userRef, {
+                email: email,
+                workCords: {},
+                homeCords: {},
+                carType: '',
+                fuelType: '',
+                gasConsumption: '',
+                gasCost: '',
+                pastRoutes: [],
+            });
+            setEmail('');
+            setPassword('');
             alert('Check your email!');
-        } catch(error){
+        } catch (error) {
             console.log(error);
-            alert('Registration failed: ' + error.message);
+            setError('Registration failed: ' + error.message);
         } finally {
             setLoading(false);
         }
-    }
+    };
 
-  return (
-    <View style={styles.container}>
-        <TextInput style={styles.textInput}
-            value={email}
-            placeholder='Email'
-            autoCapitalize='none'
-            onChangeText={(text) => setEmail(text)}
-        ></TextInput>
-        <TextInput style={styles.textInput}
-            secureTextEntry={true}
-            value={password}
-            placeholder='Password'
-            autoCapitalize='none'
-            onChangeText={(text) => setPassword(text)}
-        ></TextInput>
+    return (
+        <View style={styles.container}>
+            <TextInput style={styles.textInput}
+                value={email}
+                placeholder='Email'
+                autoCapitalize='none'
+                keyboardType='email-address'
+                onChangeText={(text) => setEmail(text)}
+            />
+            <TextInput style={styles.textInput}
+                secureTextEntry={true}
+                value={password}
+                placeholder='Password'
+                autoCapitalize='none'
+                onChangeText={(text) => setPassword(text)}
+            />
 
-        {loading ? <ActivityIndicator size="large" color="0000ff" />
-        : <>
-            <Button title="Login" onPress={signIn} />
-            <Button title="Create account" onPress={signUp} />
-        </>}
-    </View>
-  )
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            {loading ? <ActivityIndicator size="large" color="#0000ff" />
+                : <>
+                    <Button title="Login" onPress={signIn} />
+                    <Button title="Create account" onPress={signUp} />
+                </>}
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -70,7 +100,19 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
     },
-    backButton:{
+    textInput: {
+        borderColor: '#ccc',
+        borderWidth: 1,
+        padding: 10,
+        marginBottom: 10,
+        borderRadius: 5,
+    },
+    errorText: {
+        color: 'red',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    backButton: {
         position: 'absolute',
         backgroundColor: '#2233ff',
         borderRadius: 12,
@@ -80,8 +122,8 @@ const styles = StyleSheet.create({
         right: 0,
     },
     backButtonText: {
-        
+
     },
 });
 
-export default LogInScreen
+export default LogInScreen;
