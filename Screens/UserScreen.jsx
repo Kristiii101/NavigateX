@@ -37,6 +37,7 @@ export default function UserScreen({ }) {
     useEffect(() => {
         const fetchUserData = async () => {
             const currentUser = Firebase_Auth.currentUser;
+            console.log(`currentUser: ${JSON.stringify(currentUser)}`);
             if (currentUser) {
                 setUser(currentUser);
                 const userRef = ref(db, `users/${currentUser.uid}`);
@@ -64,16 +65,38 @@ export default function UserScreen({ }) {
             const userRef = ref(db, `users/${user.uid}`);
             const snapshot = await get(userRef);
             const existingData = snapshot.exists() ? snapshot.val() : {};
+            console.log(`state.workCords : ${JSON.stringify(state.workCords)}`);
+            
             const updatedData = {
-                workCords: workCords.latitude ? workCords : existingData.workCords || {},
-                homeCords: homeCords.latitude ? homeCords : existingData.homeCords || {},
+                workCords: state.workCords || existingData.workCords || {},
+                homeCords: state.homeCords || existingData.homeCords || {},
                 carType: carType || existingData.carType || '',
                 fuelType: fuelType || existingData.fuelType || '',
                 gasConsumption: gasConsumption || existingData.gasConsumption || '',
                 gasCost: gasCost || existingData.gasCost || '',
                 pastRoutes: existingData.pastRoutes || [],
             };
+            await set(userRef, updatedData);
+            console.log('User data saved successfully!');
+        }
+    };
 
+    const saveCoords = async (cords) => {
+        if (user) {
+            const userRef = ref(db, `users/${user.uid}`);
+            const snapshot = await get(userRef);
+            const existingData = snapshot.exists() ? snapshot.val() : {};
+            console.log(`state.workCords : ${JSON.stringify(state.workCords)}`);
+            
+            const updatedData = {
+                workCords: cords.workCords || existingData.workCords || {},
+                homeCords: cords.homeCords || existingData.homeCords || {},
+                carType: carType || existingData.carType || '',
+                fuelType: fuelType || existingData.fuelType || '',
+                gasConsumption: gasConsumption || existingData.gasConsumption || '',
+                gasCost: gasCost || existingData.gasCost || '',
+                pastRoutes: existingData.pastRoutes || [],
+            };
             await set(userRef, updatedData);
             console.log('User data saved successfully!');
         }
@@ -81,15 +104,17 @@ export default function UserScreen({ }) {
 
     const setWork = async () => {
         if (setCords.latitude && setCords.longitude) {
-            updateState({
+            cords = {
                 workCords: {
                     latitude: setCords.latitude,
                     longitude: setCords.longitude
                 },
-                setCords: {}
-            });
-            await saveUserData();
-            console.log('Work Coordinates Updated:', setCords);
+                setCords: {},
+                homeCords: homeCords,
+            }
+            updateState(cords);
+            await saveCoords(cords);
+            console.log('Work Coordinates Updated:', cords.workCords);
             googlePlacesRef.current.setAddressText('');
             Alert.alert('Work coordinates saved successfully');
         } else {
@@ -99,14 +124,16 @@ export default function UserScreen({ }) {
 
     const setHome = async () => {
         if (setCords.latitude && setCords.longitude) {
-            updateState({
+            cords = {
                 homeCords: {
                     latitude: setCords.latitude,
                     longitude: setCords.longitude
                 },
-                setCords: {}
-            });
-            await saveUserData();
+                setCords: {},
+                workCords: workCords,
+            }
+            updateState(cords);
+            await saveCoords(cords);
             console.log('Home Coordinates Updated:', setCords);
             googlePlacesRef.current.setAddressText('');
             Alert.alert('Home coordinates saved successfully');

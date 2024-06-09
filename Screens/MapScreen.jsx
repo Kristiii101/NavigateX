@@ -23,7 +23,7 @@ const MapScreen = () => {
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
     const route = useRoute();
-    const { workCords = {}, homeCords = {} } = route.params || {};
+    //const { workCords = {}, homeCords = {} } = route.params || {};
     const [user, setUser] = useState(null);
 
     const [state, setState] = useState({
@@ -41,15 +41,12 @@ const MapScreen = () => {
         distance: 0,
         heading: 0,
         routeStarted: 0,
-        userId: Firebase_Auth.currentUser ? Firebase_Auth.currentUser.uid : null, // Get the current user ID
+        workCords: {},
+        homeCords: {},
     });
 
-    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted, userId } = state;
+    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted, userId, workCords, homeCords } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
-
-    useEffect(() => {
-        getLiveLocation();
-    }, []);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -58,17 +55,23 @@ const MapScreen = () => {
                 setUser(currentUser);
                 const userRef = ref(db, `users/${currentUser.uid}`);
                 const snapshot = await get(userRef);
+                // console.log(`snapshot.val()}: ${JSON.stringify(snapshot.val())}`);
+                // console.log(`workCords: ${JSON.stringify(snapshot.val().workCords)}`);
+                // console.log(`homeCords: ${JSON.stringify(snapshot.val().homeCords)}`);
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
                     updateState({
                         workCords: userData.workCords || {},
                         homeCords: userData.homeCords || {},
                     });
+                    console.log(get)
                 }
             }
         };
         fetchUserData();
+        getLiveLocation();
     }, []);
+
 
     const getLiveLocation = async () => {
         const locPermissionDenied = await locationPermission();
