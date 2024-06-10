@@ -22,8 +22,6 @@ const MapScreen = () => {
     const markerRef = useRef();
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
-    //const route = useRoute();
-    //const { workCords = {}, homeCords = {} } = route.params || {};
     const [user, setUser] = useState(null);
 
     const [state, setState] = useState({
@@ -43,30 +41,32 @@ const MapScreen = () => {
         routeStarted: 0,
         workCords: {},
         homeCords: {},
+        workLocationString: '',
+        homeLocationString: '',
         userId: Firebase_Auth.currentUser ? Firebase_Auth.currentUser.uid : null,
+        locationString: '',
     });
 
-    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted, userId, workCords, homeCords } = state;
+    const { curLoc, time, distance, destinationCords, isLoading, coordinate, heading, routeStarted, userId, workCords, homeCords, workLocationString, homeLocationString, locationString } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
-    useFocusEffect (
+    useFocusEffect(
         useCallback(() => {
             const fetchUserData = async () => {
                 const currentUser = Firebase_Auth.currentUser;
+                console.log(`currentUser: ${JSON.stringify(currentUser.email)}`);
                 if (currentUser) {
                     setUser(currentUser);
                     const userRef = ref(db, `users/${currentUser.uid}`);
                     const snapshot = await get(userRef);
-                     console.log(`snapshot.val()}: ${JSON.stringify(snapshot.val())}`);
-                    // console.log(`workCords: ${JSON.stringify(snapshot.val().workCords)}`);
-                    // console.log(`homeCords: ${JSON.stringify(snapshot.val().homeCords)}`);
                     if (snapshot.exists()) {
                         const userData = snapshot.val();
                         updateState({
                             workCords: userData.workCords || {},
                             homeCords: userData.homeCords || {},
+                            workLocationString: userData.workLocationString || '',
+                            homeLocationString: userData.homeLocationString || '',
                         });
-                        console.log(get)
                     }
                 }
             };
@@ -76,38 +76,19 @@ const MapScreen = () => {
     );
 
     const getLiveLocation = async () => {
-        //const locPermissionDenied = await locationPermission();
-        // if (locPermissionDenied) {
-        //     const { latitude, longitude, heading } = await getCurrentLocation();
-        //     console.log(latitude, longitude, heading);
-        //     animate(latitude, longitude);
-        //     updateState({
-        //         heading: heading,
-        //         curLoc: { latitude, longitude },
-        //         coordinate: new AnimatedRegion({
-        //             latitude: latitude,
-        //             longitude: longitude,
-        //             latitudeDelta: LATITUDE_DELTA,
-        //             longitudeDelta: LONGITUDE_DELTA
-        //         })
-        //     });
-        // }
-
         const { latitude, longitude, heading } = await getCurrentLocation();
-            //console.log(latitude, longitude, heading);
-            animate(latitude, longitude);
-            updateState({
-                heading: heading,
-                curLoc: { latitude, longitude },
-                coordinate: new AnimatedRegion({
-                    latitude: latitude,
-                    longitude: longitude,
-                    latitudeDelta: LATITUDE_DELTA,
-                    longitudeDelta: LONGITUDE_DELTA
-                })
-            });
+        animate(latitude, longitude);
+        updateState({
+            heading: heading,
+            curLoc: { latitude, longitude },
+            coordinate: new AnimatedRegion({
+                latitude: latitude,
+                longitude: longitude,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA
+            })
+        });
 
-        // Check if current location is near the destination
         if (Object.keys(destinationCords).length > 0) {
             const distanceToDestination = getDistanceFromLatLonInMeters(
                 curLoc.latitude,
@@ -125,7 +106,6 @@ const MapScreen = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             getLiveLocation();
-            //console.log('live location updated');
         }, 1000);
         return () => clearInterval(interval);
     }, []);
@@ -198,6 +178,7 @@ const MapScreen = () => {
             destination: { latitude: destinationCords.latitude, longitude: destinationCords.longitude },
             distance: distance,
             time: time,
+            locationString: locationString // Save locationString here
         });
 
         mapRef.current.animateToRegion({
@@ -215,7 +196,8 @@ const MapScreen = () => {
                 destinationCords: {
                     latitude: workCords.latitude,
                     longitude: workCords.longitude,
-                }
+                },
+                locationString: workLocationString // Update with work location string
             });
             googlePlacesRef.current.setAddressText('Work');
             console.log(`Navigating to work: Latitude: ${workCords.latitude}, Longitude: ${workCords.longitude}`);
@@ -230,7 +212,8 @@ const MapScreen = () => {
                 destinationCords: {
                     latitude: homeCords.latitude,
                     longitude: homeCords.longitude,
-                }
+                },
+                locationString: homeLocationString // Update with home location string
             });
             googlePlacesRef.current.setAddressText('Home');
             console.log(`Navigating to home: Latitude: ${homeCords.latitude}, Longitude: ${homeCords.longitude}`);
@@ -271,17 +254,25 @@ const MapScreen = () => {
                 }}
                 onPress={(data, details = null) => {
                     const { lat, lng } = details.geometry.location;
+                    const location = {
+                        name: details.name,
+                        city: details.address_components.find(component => component.types.includes('locality')).long_name,
+                        country: details.address_components.find(component => component.types.includes('country')).short_name
+                    };
+                    const locationString = `${location.name}, ${location.city}, ${location.country}`;
+                    console.log(locationString);
+
                     updateState({
                         destinationCords: {
                             latitude: lat,
                             longitude: lng,
-                        }
+                        },
+                        locationString // Update locationString in state
                     });
                 }}
                 query={{
                     key: googleapikey,
                     language: 'en',
-                    //type: 'address',
                     types: 'establishment',
                     location: '45.7494,21.2272', // Coordinates for Timisoara
                     radius: 50000, // 50 km radius
@@ -350,8 +341,8 @@ const MapScreen = () => {
 
             {routeStarted !== 0 && distance !== 0 && time !== 0 && (
                 <View style={{ position: 'absolute', alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#228822', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100, }}>
-                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Time left: {time.toFixed(0)} minutes</Text>
-                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Distance left: {distance.toFixed(0)} Km</Text>
+                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Time left: {time.toFixed(2)} minutes</Text>
+                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Distance left: {distance.toFixed(2)} Km</Text>
                 </View>
             )}
 

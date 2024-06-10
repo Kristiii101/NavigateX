@@ -1,36 +1,55 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Image, Dimensions } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { ref, set } from 'firebase/database';
 import { useNavigation } from '@react-navigation/native';
-import { Firebase_Auth } from '../utils/FireBaseConfig';
+import { Firebase_Auth, db } from '../utils/FireBaseConfig';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import imagePath from '../utils/imagePath';
 
 const { width, height } = Dimensions.get('window');
 
-const LogInScreen = () => {
+const RegisterScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState(''); // New state for confirm password
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigation = useNavigation();
     const auth = Firebase_Auth;
 
-    const signIn = async () => {
+    const signUp = async () => {
         setLoading(true);
         setError('');
-        if (!email || !password) {
+        if (!email || !password || !confirmPassword) {
             setLoading(false);
-            setError('Email and password are required.');
+            setError('All fields are required.');
+            return;
+        }
+        if (password !== confirmPassword) {
+            setLoading(false);
+            setError('Passwords do not match.');
             return;
         }
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const response = await createUserWithEmailAndPassword(auth, email, password);
+            const userId = response.user.uid;
+            const userRef = ref(db, `users/${userId}`);
+            await set(userRef, {
+                workCords: {},
+                homeCords: {},
+                carType: '',
+                fuelType: '',
+                gasConsumption: '',
+                gasCost: '',
+                pastRoutes: [],
+            });
             setEmail('');
             setPassword('');
+            setConfirmPassword(''); // Clear confirm password field
         } catch (error) {
-            setError('Sign in failed: ' + error.message);
+            setError('Registration failed: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -39,7 +58,7 @@ const LogInScreen = () => {
     return (
         <View style={styles.container}>
             <Image source={imagePath.imBackGround} style={styles.backgroundImage} />
-            <Text style={{fontSize: 28, fontWeight: 'bold', marginBottom: 20}}>Log in</Text>
+            <Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 20 }}>Register</Text>
             
             <Text style={{fontSize: 15}}>Email address</Text>
             <View style={styles.inputContainer}>
@@ -67,20 +86,33 @@ const LogInScreen = () => {
                 />
             </View>
 
+            <Text style={{fontSize: 15}}>Confirm Password</Text>
+            <View style={styles.inputContainer}>
+                <Icon name="lock" size={20} style={styles.icon} />
+                <TextInput
+                    style={styles.textInput}
+                    secureTextEntry={true}
+                    value={confirmPassword} // New confirm password input
+                    placeholder='Confirm Password'
+                    autoCapitalize='none'
+                    onChangeText={(text) => setConfirmPassword(text)}
+                />
+            </View>
+
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             {loading ? (
                 <ActivityIndicator size="large" color="#007bff" />
             ) : (
-                <TouchableOpacity style={styles.button} onPress={signIn}>
-                    <Text style={styles.buttonText}>Log in</Text>
+                <TouchableOpacity style={styles.button} onPress={signUp}>
+                    <Text style={styles.buttonText}>Register</Text>
                 </TouchableOpacity>
             )}
 
             <View style={styles.linkContainer}>
-                <Text style={{fontSize: 15}}>Don't have an account?</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('RegisterScreen')}>
-                    <Text style={styles.linkText}>Register for free</Text>
+                <Text style={{fontSize: 15}}>Already have an account?</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('LogInScreen')}>
+                    <Text style={styles.linkText}>Log In here!</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -111,7 +143,6 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         opacity: 0.4, // Adjust opacity as needed
-        paddingTop: 50,
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
@@ -153,4 +184,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LogInScreen;
+export default RegisterScreen;

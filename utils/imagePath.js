@@ -10,4 +10,5 @@ export default {
     imRoutes: require("../Images/routesLogo.png"),
     imCarLogo: require("../Images/carLogo.png"),
     imLogo: require("../Images/NavigateXLOGO.png"),
+    imBackGround: require("../Images/mapBackground.jpg"),
 }

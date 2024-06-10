@@ -29,15 +29,17 @@ export default function UserScreen({ }) {
         pastRoutes: [],
         isRoutesModalVisible: false,
         isCarModalVisible: false,
+        workLocationString: '',
+        homeLocationString: ''
     });
 
-    const { time, distance, workCords, homeCords, setCords, pastRoutes, isRoutesModalVisible, isCarModalVisible } = state;
+    const { time, distance, workCords, homeCords, setCords, pastRoutes, isRoutesModalVisible, isCarModalVisible, workLocationString, homeLocationString } = state;
     const updateState = (data) => setState((state) => ({ ...state, ...data }));
 
     useEffect (() => {
         const fetchUserData = async () => {
             const currentUser = Firebase_Auth.currentUser;
-            console.log(`currentUser: ${JSON.stringify(currentUser)}`);
+            console.log(`currentUser: ${JSON.stringify(currentUser.email)}`);
             if (currentUser) {
                 setUser(currentUser);
                 const userRef = ref(db, `users/${currentUser.uid}`);
@@ -52,6 +54,8 @@ export default function UserScreen({ }) {
                         workCords: userData.workCords || {},
                         homeCords: userData.homeCords || {},
                         pastRoutes: userData.pastRoutes || [],
+                        workLocationString: userData.workLocationString || '',
+                        homeLocationString: userData.homeLocationString || ''
                     });
                 }
             }
@@ -65,7 +69,6 @@ export default function UserScreen({ }) {
             const userRef = ref(db, `users/${user.uid}`);
             const snapshot = await get(userRef);
             const existingData = snapshot.exists() ? snapshot.val() : {};
-            console.log(`state.workCords : ${JSON.stringify(state.workCords)}`);
             
             const updatedData = {
                 workCords: state.workCords || existingData.workCords || {},
@@ -75,6 +78,8 @@ export default function UserScreen({ }) {
                 gasConsumption: gasConsumption || existingData.gasConsumption || '',
                 gasCost: gasCost || existingData.gasCost || '',
                 pastRoutes: existingData.pastRoutes || [],
+                workLocationString: state.workLocationString || existingData.workLocationString || '',
+                homeLocationString: state.homeLocationString || existingData.homeLocationString || ''
             };
             await set(userRef, updatedData);
             console.log('User data saved successfully!');
@@ -86,7 +91,6 @@ export default function UserScreen({ }) {
             const userRef = ref(db, `users/${user.uid}`);
             const snapshot = await get(userRef);
             const existingData = snapshot.exists() ? snapshot.val() : {};
-            console.log(`state.workCords : ${JSON.stringify(state.workCords)}`);
             
             const updatedData = {
                 workCords: cords.workCords || existingData.workCords || {},
@@ -96,6 +100,8 @@ export default function UserScreen({ }) {
                 gasConsumption: gasConsumption || existingData.gasConsumption || '',
                 gasCost: gasCost || existingData.gasCost || '',
                 pastRoutes: existingData.pastRoutes || [],
+                workLocationString: cords.workLocationString || existingData.workLocationString || '',
+                homeLocationString: cords.homeLocationString || existingData.homeLocationString || ''
             };
             await set(userRef, updatedData);
             console.log('User data saved successfully!');
@@ -104,13 +110,14 @@ export default function UserScreen({ }) {
 
     const setWork = async () => {
         if (setCords.latitude && setCords.longitude) {
-            cords = {
+            const cords = {
                 workCords: {
                     latitude: setCords.latitude,
                     longitude: setCords.longitude
                 },
                 setCords: {},
                 homeCords: homeCords,
+                workLocationString: setCords.locationString
             }
             updateState(cords);
             await saveCoords(cords);
@@ -124,13 +131,14 @@ export default function UserScreen({ }) {
 
     const setHome = async () => {
         if (setCords.latitude && setCords.longitude) {
-            cords = {
+            const cords = {
                 homeCords: {
                     latitude: setCords.latitude,
                     longitude: setCords.longitude
                 },
                 setCords: {},
                 workCords: workCords,
+                homeLocationString: setCords.locationString
             }
             updateState(cords);
             await saveCoords(cords);
@@ -160,8 +168,9 @@ export default function UserScreen({ }) {
                         destination: {
                             latitude: route.destination.latitude.toFixed(2),
                             longitude: route.destination.longitude.toFixed(2),
+                            locationString: route.locationString // Ensure locationString is included
                         },
-                        time: (route.time / 60).toFixed(2),  // convert to minutes
+                        time: route.time.toFixed(2),  // convert to minutes
                         distance: route.distance.toFixed(2),  // convert to kilometers
                         fuelConsumed,
                         moneySpent,
@@ -271,10 +280,13 @@ export default function UserScreen({ }) {
                 }}
                 onPress={(data, details = null) => {
                     const { lat, lng } = details.geometry.location;
+                    const locationString = `${details.name}, ${details.address_components.find(component => component.types.includes('locality')).long_name}, ${details.address_components.find(component => component.types.includes('country')).short_name}`;
+
                     updateState({
                         setCords: {
                             latitude: lat,
                             longitude: lng,
+                            locationString: locationString
                         }
                     });
                 }}
@@ -313,21 +325,19 @@ export default function UserScreen({ }) {
                         renderItem={({ item, index }) => (
                             <TouchableOpacity onPress={() => setExpandedItem(expandedItem === index ? null : index)}>
                                 <View style={styles.routeItem}>
-                                    <Text>Start: {`Latitude: ${item.start.latitude}, Longitude: ${item.start.longitude}`}</Text>
-                                    <Text>Destination: {`Latitude: ${item.destination.latitude}, Longitude: ${item.destination.longitude}`}</Text>
+                                    <Text>Destination: {item.destination.locationString}</Text>
                                     {expandedItem === index && (
                                         <>
-                                            <Text>Time: {`${item.time} minutes`}</Text>
-                                            <Text>Distance: {`${item.distance} km`}</Text>
-                                            <Text>Fuel Consumed: {`${item.fuelConsumed} liters`}</Text>
-                                            <Text>Spent on the trip: {`${item.moneySpent} $`}</Text>
+                                            <Text>Time: {`${item.time} Minutes`}</Text>
+                                            <Text>Distance: {`${item.distance} KM`}</Text>
+                                            <Text>Fuel Consumed: {`${item.fuelConsumed} Liters`}</Text>
+                                            <Text>Spent on the trip: {`${item.moneySpent} RON`}</Text>
                                         </>
                                     )}
                                 </View>
                             </TouchableOpacity>
                         )}
                     />
-
 
                     <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                         <Text style={styles.closeButtonText}>Close</Text>
@@ -375,7 +385,7 @@ export default function UserScreen({ }) {
                         placeholder="Enter fuel consumption"
                     />
 
-                    <Text style={styles.label}>Fuel Cost (per liter):</Text>
+                    <Text style={styles.label}>Fuel Cost/Liter in RON:</Text>
                     <TextInput
                         style={styles.input}
                         value={gasCost}
@@ -588,3 +598,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
