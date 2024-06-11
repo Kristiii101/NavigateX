@@ -13,7 +13,7 @@ const { width, height } = Dimensions.get('window');
 const RegisterScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState(''); // New state for confirm password
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigation = useNavigation();
@@ -47,7 +47,7 @@ const RegisterScreen = () => {
             });
             setEmail('');
             setPassword('');
-            setConfirmPassword(''); // Clear confirm password field
+            setConfirmPassword('');
         } catch (error) {
             setError('Registration failed: ' + error.message);
         } finally {
@@ -92,7 +92,7 @@ const RegisterScreen = () => {
                 <TextInput
                     style={styles.textInput}
                     secureTextEntry={true}
-                    value={confirmPassword} // New confirm password input
+                    value={confirmPassword}
                     placeholder='Confirm Password'
                     autoCapitalize='none'
                     onChangeText={(text) => setConfirmPassword(text)}
@@ -142,11 +142,11 @@ const styles = StyleSheet.create({
         height: height,
         top: 0,
         left: 0,
-        opacity: 0.4, // Adjust opacity as needed
+        opacity: 0.4,
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.5)', // Optional overlay to darken the background
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     icon: {
         marginRight: 10,

@@ -110,12 +110,12 @@ const styles = StyleSheet.create({
         height: height,
         top: 0,
         left: 0,
-        opacity: 0.4, // Adjust opacity as needed
+        opacity: 0.4,
         paddingTop: 50,
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.5)', // Optional overlay to darken the background
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     icon: {
         marginRight: 10,

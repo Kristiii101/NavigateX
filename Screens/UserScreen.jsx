@@ -9,7 +9,7 @@ import Modal from 'react-native-modal';
 import { Firebase_Auth, db } from '../utils/FireBaseConfig';
 import { ref, set, get } from 'firebase/database';
 
-export default function UserScreen({ }) {
+const UserScreen = () => {
     const googlePlacesRef = useRef();
     const navigation = useNavigation();
     const [carType, setCarType] = useState('');
@@ -168,10 +168,10 @@ export default function UserScreen({ }) {
                         destination: {
                             latitude: route.destination.latitude.toFixed(2),
                             longitude: route.destination.longitude.toFixed(2),
-                            locationString: route.locationString // Ensure locationString is included
+                            locationString: route.locationString
                         },
-                        time: route.time.toFixed(2),  // convert to minutes
-                        distance: route.distance.toFixed(2),  // convert to kilometers
+                        time: route.time.toFixed(2),
+                        distance: route.distance.toFixed(2), 
                         fuelConsumed,
                         moneySpent,
                     };
@@ -294,8 +294,8 @@ export default function UserScreen({ }) {
                     key: googleapikey,
                     language: 'en',
                     types: 'establishment',
-                    location: '45.7494,21.2272', // Coordinates for Timisoara
-                    radius: 50000,               // 50 km radius
+                    location: '45.7494,21.2272',
+                    radius: 50000,
                     rankby: 'distance',
                 }}
                 nearbyPlacesAPI='GooglePlacesSearch'
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     },
     routesButton: {
         position: 'absolute',
-        bottom: 120,
+        top: 170,
         left: 10,
         zIndex: 2,
         backgroundColor: '#ffffff',
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     },
     carLogoButton: { 
         position: 'absolute',
-        bottom: 160,
+        top: 210,
         left: 10,
         zIndex: 2,
         backgroundColor: '#ffffff',
@@ -599,3 +599,4 @@ const styles = StyleSheet.create({
     },
 });
 
+export default UserScreen;

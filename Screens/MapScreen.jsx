@@ -4,11 +4,11 @@ import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import googleapikey from '../utils/google_api_key';
 import MapViewDirections from 'react-native-maps-directions';
 import Loader from '../Components/Loader';
-import { locationPermission, getCurrentLocation } from '../Components/getCurrentLocation';
+import { getCurrentLocation } from '../Components/getCurrentLocation';
 import regions from '../utils/regions';
 import imagePath from '../utils/imagePath';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ref, push, set, get } from 'firebase/database';
 import { db, Firebase_Auth } from '../utils/FireBaseConfig';
 

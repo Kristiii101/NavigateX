@@ -4,11 +4,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import FlashMessage from 'react-native-flash-message';
 import { User, onAuthStateChanged } from 'firebase/auth';
 
-// Screens
 import MapScreen from './Screens/MapScreen';
 import UserScreen from './Screens/UserScreen';
 import LogInScreen from './Screens/LogInScreen';
-import RegisterScreen from './Screens/RegisterScreen';  // Import RegisterScreen
+import RegisterScreen from './Screens/RegisterScreen';
 import { Firebase_Auth } from './utils/FireBaseConfig';
 
 const Stack = createStackNavigator();
@@ -31,7 +30,7 @@ function InsideLayout() {
   );
 }
 
-export default function App() {
+const App = () =>{
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -57,7 +56,7 @@ export default function App() {
               options={{ headerShown: false }} 
             />
             <Stack.Screen 
-              name="RegisterScreen"  // Add RegisterScreen to the navigation
+              name="RegisterScreen"
               component={RegisterScreen} 
               options={{ headerShown: false }} 
             />
@@ -68,3 +67,5 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
+export default App;
