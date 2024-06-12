@@ -178,7 +178,7 @@ const MapScreen = () => {
             destination: { latitude: destinationCords.latitude, longitude: destinationCords.longitude },
             distance: distance,
             time: time,
-            locationString: locationString // Save locationString here
+            locationString: locationString
         });
 
         mapRef.current.animateToRegion({
@@ -197,7 +197,7 @@ const MapScreen = () => {
                     latitude: workCords.latitude,
                     longitude: workCords.longitude,
                 },
-                locationString: workLocationString // Update with work location string
+                locationString: workLocationString
             });
             googlePlacesRef.current.setAddressText('Work');
             console.log(`Navigating to work: Latitude: ${workCords.latitude}, Longitude: ${workCords.longitude}`);
@@ -213,7 +213,7 @@ const MapScreen = () => {
                     latitude: homeCords.latitude,
                     longitude: homeCords.longitude,
                 },
-                locationString: homeLocationString // Update with home location string
+                locationString: homeLocationString
             });
             googlePlacesRef.current.setAddressText('Home');
             console.log(`Navigating to home: Latitude: ${homeCords.latitude}, Longitude: ${homeCords.longitude}`);
@@ -223,16 +223,16 @@ const MapScreen = () => {
     };
 
     const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
-        var R = 6371; // Radius of the earth in km
-        var dLat = deg2rad(lat2 - lat1); // deg2rad below
+        var R = 6371;
+        var dLat = deg2rad(lat2 - lat1); 
         var dLon = deg2rad(lon2 - lon1);
         var a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        var d = R * c; // Distance in km
-        return d * 1000; // Distance in meters
+        var d = R * c;
+        return d * 1000;
     };
 
     const deg2rad = (deg) => {
@@ -267,15 +267,15 @@ const MapScreen = () => {
                             latitude: lat,
                             longitude: lng,
                         },
-                        locationString // Update locationString in state
+                        locationString
                     });
                 }}
                 query={{
                     key: googleapikey,
                     language: 'en',
                     types: 'establishment',
-                    location: '45.7494,21.2272', // Coordinates for Timisoara
-                    radius: 50000, // 50 km radius
+                    location: '45.7494,21.2272',
+                    radius: 50000,
                     rankby: 'distance',
                 }}
                 nearbyPlacesAPI='GooglePlacesSearch'
@@ -284,11 +284,43 @@ const MapScreen = () => {
                     container: {
                         flex: 0,
                         position: 'absolute',
-                        top: 75,
+                        top: 78,
                         width: '100%',
                         zIndex: 2,
                     },
-                    listView: { backgroundColor: 'white' }
+                    textInputContainer: {
+                        backgroundColor: 'transparent',
+                        borderTopWidth: 0,
+                        borderBottomWidth: 0,
+                        height: 50,
+                        marginHorizontal: 0,
+                    },
+                    textInput: {
+                        height: 38,
+                        color: 'black',
+                        fontSize: 16,
+                        borderRadius: 8,
+                        paddingLeft: 10,
+                        backgroundColor: '#F1F1F1',
+                        marginHorizontal: 10,
+                    },
+                    listView: {
+                        backgroundColor: 'white',
+                        marginHorizontal: 5,
+                    },
+                    row: {
+                        backgroundColor: '#FFFFFF',
+                        padding: 10,
+                        height: 44,
+                        flexDirection: 'row',
+                    },
+                    separator: {
+                        height: 0,
+                        backgroundColor: '#c8c7cc',
+                    },
+                    description: {
+                        color: '#004',
+                    },
                 }}
             />
 
@@ -310,39 +342,30 @@ const MapScreen = () => {
             )}
 
             <TouchableOpacity
-                style={styles.workButton}
+                style={{position:'absolute', zIndex: 2 ,top:28, left:15}}
                 onPress={setDestinationToWork}
             >
-                <View style={styles.iconTextRow}>
-                    <Text style={styles.workButtonText}>Work</Text>
-                    <Image source={imagePath.imWork} style={styles.icon} />
-                </View>
+                <Image source={imagePath.imSuitcase} style={{width: 55, height: 50}} />
             </TouchableOpacity>
 
             <TouchableOpacity
                 style={styles.userButton}
                 onPress={() => navigation.navigate("UserScreen", { curLoc, destinationCords })}
             >
-                <View style={styles.iconTextRow}>
-                    <Text style={styles.userButtonText}>Navigator</Text>
-                    <Image source={imagePath.imUser} style={styles.icon} />
-                </View>
+                <Image source={imagePath.imUser} style={styles.icon} />
             </TouchableOpacity>
 
             <TouchableOpacity
-                style={styles.homeButton}
+                style={{position:'absolute', zIndex: 2 ,top:28, right:15}}
                 onPress={setDestinationToHome}
             >
-                <View style={styles.iconTextRow}>
-                    <Text style={styles.homeButtonText}>Home</Text>
-                    <Image source={imagePath.imHome} style={styles.icon} />
-                </View>
+                <Image source={imagePath.imHouse} style={{width: 55, height: 50}} />
             </TouchableOpacity>
 
             {routeStarted !== 0 && distance !== 0 && time !== 0 && (
-                <View style={{ position: 'absolute', alignItems: 'center', top: 90, left: 10, marginVertical: 25, zIndex: 1, backgroundColor: '#228822', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100, }}>
-                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Time left: {time.toFixed(2)} minutes</Text>
-                    <Text style={{ color: '#ffffff', fontSize: 15, }}>Distance left: {distance.toFixed(2)} Km</Text>
+                <View style={{ position: 'absolute', alignItems: 'center', bottom: 50, left: 120, marginVertical: 25, zIndex: 2, backgroundColor: '#0b81ff', paddingVertical: 5, paddingHorizontal: 10, color: 'blue', borderRadius: 100, }}>
+                    <Text style={{ color: '#000', fontSize: 15, }}>Time left: {time.toFixed(2)} minutes</Text>
+                    <Text style={{ color: '#000', fontSize: 15, }}>Distance left: {distance.toFixed(2)} Km</Text>
                 </View>
             )}
 
@@ -382,7 +405,7 @@ const MapScreen = () => {
                         destination={destinationCords}
                         apikey={googleapikey}
                         strokeWidth={6}
-                        strokeColor="green"
+                        strokeColor="#77f"
                         optimizeWaypoints={true}
                         onStart={(params) => {
                             console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
@@ -409,7 +432,7 @@ const MapScreen = () => {
                     style={{
                         position: 'absolute',
                         bottom: 0,
-                        right: 0
+                        right: 0,
                     }}
                     onPress={onCenter}
                 >
@@ -437,13 +460,13 @@ const MapScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 120,
-        backgroundColor: '#deddee'
+        backgroundColor: 'white',
+        paddingTop: 22,
     },
     clearButton: {
         position: 'absolute',
-        top: 80, // Adjust as needed
-        right: 8, // Adjust as needed
+        top: 80, 
+        right: 8,
         zIndex: 2,
         backgroundColor: 'red',
         borderRadius: 15,
@@ -458,14 +481,14 @@ const styles = StyleSheet.create({
     },
     startRouteButton: {
         position: 'absolute',
-        bottom: 80, // Adjust as needed
+        bottom: 80,
         left: '50%',
         transform: [{ translateX: -50 }],
         zIndex: 2,
-        backgroundColor: 'green',
+        backgroundColor: '#0b81ff',
         borderRadius: 10,
         paddingVertical: 10,
-        paddingHorizontal: 20,
+        paddingHorizontal: 15,
         justifyContent: 'center',
         alignItems: 'center'
     },
@@ -475,52 +498,39 @@ const styles = StyleSheet.create({
     },
     workButton: {
         position: 'absolute',
-        top: 30, // Adjust as needed
+        top: 30,
         left: 12,
-        right: 300,
         zIndex: 2,
-        backgroundColor: '#7f3f0f',
+        backgroundColor: '#0b81ff',
         borderRadius: 10,
         paddingVertical: 10,
-        paddingHorizontal: 10,
+        paddingHorizontal: 20,
         justifyContent: 'space-evenly',
         alignItems: 'center',
         flexDirection: 'row',
-    },
-    workButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
     },
     homeButton: {
         position: 'absolute',
-        top: 30, // Adjust as needed
-        left: 300,
+        top: 30,
         right: 12,
         zIndex: 2,
-        backgroundColor: '#228822',
+        backgroundColor: '#0b81ff',
         borderRadius: 12,
         paddingVertical: 10,
-        paddingHorizontal: 10,
+        paddingHorizontal: 15,
         justifyContent: 'space-evenly',
         alignItems: 'center',
         flexDirection: 'row',
     },
-    homeButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
     userButton: {
         position: 'absolute',
-        top: 30, // Adjust as needed
-        left: 120,
-        right: 120,
+        top: 30,
+        left: 150,
+        right: 150,
         zIndex: 2,
         backgroundColor: 'blue',
         borderRadius: 12,
         paddingVertical: 10,
-        paddingHorizontal: 45,
         justifyContent: 'space-evenly',
         alignItems: 'center',
         flexDirection: 'row',
@@ -530,14 +540,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    iconTextRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
     icon: {
         width: 20,
         height: 25,
-        marginLeft: 5,
     },
 });
 

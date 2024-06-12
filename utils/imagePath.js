@@ -11,4 +11,7 @@ export default {
     imCarLogo: require("../Images/carLogo.png"),
     imLogo: require("../Images/NavigateXLOGO.png"),
     imBackGround: require("../Images/mapBackground.jpg"),
+    imHouse: require("../Images/house.png"),
+    imSuitcase: require("../Images/suitcase.png"),
+    imBack: require("../Images/back.png"),
 }
