@@ -23,6 +23,4 @@ const Loader = ({ isLoading = false }) => {
     return null;
 };
 
-
-
 export default Loader;
