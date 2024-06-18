@@ -350,7 +350,7 @@ const MapScreen = () => {
 
             <TouchableOpacity
                 style={styles.userButton}
-                onPress={() => navigation.navigate("UserScreen", { curLoc, destinationCords })}
+                onPress={() => navigation.navigate("UserScreen")}
             >
                 <Image source={imagePath.imUser} style={styles.icon} />
             </TouchableOpacity>

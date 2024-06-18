@@ -30,7 +30,7 @@ const LogInScreen = () => {
             setEmail('');
             setPassword('');
         } catch (error) {
-            setError('Sign in failed: ' + error.message);
+            setError('Sign in failed: ERROR (invalid credentials)');
         } finally {
             setLoading(false);
         }

@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Image, Alert, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import googleapikey from '../utils/google_api_key';
 import imagePath from '../utils/imagePath';
@@ -212,7 +212,7 @@ const UserScreen = () => {
     return (
         <View style={styles.container}>
             <TouchableOpacity
-                onPress={() => navigation.navigate("MapScreen", { workCords, homeCords, userId: user.uid })}
+                onPress={() => navigation.navigate("MapScreen")}
                 style={{position:'absolute', top:20, left: 15}}
             >
                 <Image source={imagePath.imBack} style={{width: 40, height: 40}} />

@@ -49,7 +49,7 @@ const RegisterScreen = () => {
             setPassword('');
             setConfirmPassword('');
         } catch (error) {
-            setError('Registration failed: ' + error.message);
+            setError('Registration failed: Email already in use');
         } finally {
             setLoading(false);
         }
